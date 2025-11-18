@@ -22,6 +22,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          glow: "hsl(var(--primary-glow))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -56,6 +57,20 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        dashboard: {
+          bg: "hsl(var(--dashboard-bg))",
+          panel: "hsl(var(--dashboard-panel))",
+        },
+        calendar: {
+          today: "hsl(var(--calendar-today))",
+          "today-bg": "hsl(var(--calendar-today-bg))",
+          event: "hsl(var(--calendar-event))",
+          task: "hsl(var(--calendar-task))",
+          weekend: "hsl(var(--calendar-weekend))",
+        },
+        weather: {
+          icon: "hsl(var(--weather-icon))",
         },
       },
       borderRadius: {
