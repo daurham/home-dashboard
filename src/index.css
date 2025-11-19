@@ -1,0 +1,186 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Base colors */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    
+    /* Dashboard-specific colors */
+    --dashboard-bg: 240 20% 99%;
+    --dashboard-panel: 0 0% 100%;
+    
+    /* Card colors */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    
+    /* Popover colors */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    
+    /* Theme accent colors - default teal */
+    --accent-hue: 180;
+    --primary: var(--accent-hue) 65% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: var(--accent-hue) 65% 55%;
+    
+    /* Secondary colors */
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 222 47% 11%;
+    
+    /* Muted colors */
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    
+    /* Accent colors */
+    --accent: 240 5% 96%;
+    --accent-foreground: 222 47% 11%;
+    
+    /* Destructive colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Border and input */
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: var(--accent-hue) 65% 45%;
+    
+    /* Sidebar */
+    --sidebar-background: 240 20% 99%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: var(--accent-hue) 65% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-ring: var(--accent-hue) 65% 45%;
+    
+    /* Calendar-specific */
+    --calendar-today: var(--accent-hue) 65% 45%;
+    --calendar-today-bg: var(--accent-hue) 65% 95%;
+    --calendar-event: var(--accent-hue) 65% 35%;
+    --calendar-task: 260 60% 50%;
+    --calendar-weekend: 240 5% 98%;
+    
+    /* Weather widget */
+    --weather-icon: var(--accent-hue) 65% 45%;
+    
+    /* Shadows and effects */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --shadow-glow: 0 0 20px hsl(var(--accent-hue) 65% 45% / 0.3);
+    
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    /* Base colors */
+    --background: 222 47% 5%;
+    --foreground: 210 40% 98%;
+    
+    /* Dashboard-specific colors */
+    --dashboard-bg: 222 47% 5%;
+    --dashboard-panel: 222 47% 8%;
+    
+    /* Card colors */
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 98%;
+    
+    /* Popover colors */
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 98%;
+    
+    /* Primary colors - uses accent-hue from light mode */
+    --primary: var(--accent-hue) 65% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: var(--accent-hue) 65% 60%;
+    
+    /* Secondary colors */
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    
+    /* Muted colors */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    
+    /* Accent colors */
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    
+    /* Destructive colors */
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Border and input */
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: var(--accent-hue) 65% 50%;
+    
+    /* Sidebar */
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: var(--accent-hue) 65% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: var(--accent-hue) 65% 50%;
+    
+    /* Calendar-specific */
+    --calendar-today: var(--accent-hue) 65% 50%;
+    --calendar-today-bg: var(--accent-hue) 65% 15%;
+    --calendar-event: var(--accent-hue) 65% 45%;
+    --calendar-task: 260 60% 60%;
+    --calendar-weekend: 222 47% 7%;
+    
+    /* Weather widget */
+    --weather-icon: var(--accent-hue) 65% 50%;
+    
+    /* Shadows and effects */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+    --shadow-glow: 0 0 20px hsl(var(--accent-hue) 65% 50% / 0.4);
+  }
+  
+  /* Theme variations */
+  [data-accent="teal"] {
+    --accent-hue: 180;
+  }
+  
+  [data-accent="blue"] {
+    --accent-hue: 220;
+  }
+  
+  [data-accent="green"] {
+    --accent-hue: 140;
+  }
+  
+  [data-accent="orange"] {
+    --accent-hue: 30;
+  }
+  
+  [data-accent="purple"] {
+    --accent-hue: 260;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
