@@ -1,119 +1,209 @@
-import { CalendarEvent } from '@/lib/store';
+import { CalendarEvent, RecurrenceType } from '@/lib/store';
+import { formatDate, parseDate } from '@/lib/calendar';
+import { getEventsForDate } from '@/lib/calendar/recurrence';
 
 /**
- * Calendar service for date calculations and event management.
+ * Input type for creating a new event (without id)
  */
-export class CalendarService {
-  /**
-   * Get the start of a week (Monday) for a given date
-   */
-  static getWeekStart(date: Date): Date {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when Sunday
-    return new Date(d.setDate(diff));
-  }
-  
-  /**
-   * Get an array of dates for a given week
-   */
-  static getWeekDates(weekStart: Date): Date[] {
-    const dates: Date[] = [];
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(weekStart);
-      date.setDate(weekStart.getDate() + i);
-      dates.push(date);
+export interface EventInput {
+  title: string;
+  description?: string;
+  date: string; // YYYY-MM-DD
+  time?: string; // HH:MM
+  recurrence?: RecurrenceType;
+  type: 'event' | 'task';
+}
+
+/**
+ * Storage key for calendar events in localStorage
+ */
+const STORAGE_KEY = 'calendar-events';
+
+/**
+ * Get all events from localStorage (internal helper)
+ */
+async function loadEventsFromStorage(): Promise<CalendarEvent[]> {
+  return new Promise((resolve) => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const events = JSON.parse(stored) as CalendarEvent[];
+        // Validate and ensure dates are strings
+        const validEvents = events.map(event => ({
+          ...event,
+          date: event.date, // Ensure date is string
+        }));
+        resolve(validEvents);
+      } else {
+        resolve([]);
+      }
+    } catch (error) {
+      console.error('Error reading events from localStorage:', error);
+      resolve([]);
     }
-    return dates;
-  }
+  });
+}
+
+/**
+ * Save all events to localStorage
+ */
+async function saveAllEvents(events: CalendarEvent[]): Promise<void> {
+  return new Promise((resolve) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      resolve();
+    } catch (error) {
+      console.error('Error saving events to localStorage:', error);
+      resolve();
+    }
+  });
+}
+
+/**
+ * Get events for a date range
+ * Includes recurring events that fall within the range
+ */
+export async function getEventsForRange(
+  start: Date,
+  end: Date
+): Promise<CalendarEvent[]> {
+  const allEvents = await loadEventsFromStorage();
+  const eventsInRange: CalendarEvent[] = [];
+  const seenEventKeys = new Set<string>();
   
-  /**
-   * Get the four weeks to display: previous, current, next, and following
-   */
-  static getFourWeeks(currentDate: Date): Date[][] {
-    const currentWeekStart = this.getWeekStart(currentDate);
-    const weeks: Date[][] = [];
+  // Iterate through each day in the range
+  const currentDate = new Date(start);
+  currentDate.setHours(0, 0, 0, 0);
+  
+  const endDate = new Date(end);
+  endDate.setHours(23, 59, 59, 999);
+  
+  while (currentDate <= endDate) {
+    const dateStr = formatDate(currentDate);
+    const dayEvents = getEventsForDate(dateStr, allEvents);
     
-    // Previous week
-    const prevWeekStart = new Date(currentWeekStart);
-    prevWeekStart.setDate(currentWeekStart.getDate() - 7);
-    weeks.push(this.getWeekDates(prevWeekStart));
-    
-    // Current week
-    weeks.push(this.getWeekDates(currentWeekStart));
-    
-    // Next week
-    const nextWeekStart = new Date(currentWeekStart);
-    nextWeekStart.setDate(currentWeekStart.getDate() + 7);
-    weeks.push(this.getWeekDates(nextWeekStart));
-    
-    // Following week
-    const followingWeekStart = new Date(currentWeekStart);
-    followingWeekStart.setDate(currentWeekStart.getDate() + 14);
-    weeks.push(this.getWeekDates(followingWeekStart));
-    
-    return weeks;
-  }
-  
-  /**
-   * Format date to YYYY-MM-DD
-   */
-  static formatDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-  
-  /**
-   * Check if two dates are the same day
-   */
-  static isSameDay(date1: Date, date2: Date): boolean {
-    return this.formatDate(date1) === this.formatDate(date2);
-  }
-  
-  /**
-   * Check if a date is today
-   */
-  static isToday(date: Date): boolean {
-    return this.isSameDay(date, new Date());
-  }
-  
-  /**
-   * Check if a date is a weekend
-   */
-  static isWeekend(date: Date): boolean {
-    const day = date.getDay();
-    return day === 0 || day === 6;
-  }
-  
-  /**
-   * Get events for a specific date, including recurring events
-   */
-  static getEventsForDate(date: string, allEvents: CalendarEvent[]): CalendarEvent[] {
-    return allEvents.filter(event => {
-      if (event.date === date) return true;
+    // Add events for this day, avoiding duplicates
+    dayEvents.forEach(event => {
+      // Create a unique key: original event ID + date
+      // For recurring events, this allows multiple instances of the same event
+      const eventKey = `${event.id}-${dateStr}`;
       
-      if (event.recurrence) {
-        const eventDate = new Date(event.date);
-        const targetDate = new Date(date);
+      if (!seenEventKeys.has(eventKey)) {
+        seenEventKeys.add(eventKey);
         
-        // Only show recurring events for dates after the original event
-        if (targetDate < eventDate) return false;
-        
-        switch (event.recurrence) {
-          case 'daily':
-            return true;
-          case 'weekly':
-            return eventDate.getDay() === targetDate.getDay();
-          case 'monthly':
-            return eventDate.getDate() === targetDate.getDate();
-          default:
-            return false;
+        // For recurring events on dates other than the original, create a virtual instance
+        if (event.recurrence && event.date !== dateStr) {
+          eventsInRange.push({
+            ...event,
+            date: dateStr,
+            // Keep original ID for reference, but mark as recurring instance
+            id: event.id, // Keep original ID to maintain relationship
+          });
+        } else {
+          eventsInRange.push(event);
         }
       }
-      
-      return false;
     });
+    
+    currentDate.setDate(currentDate.getDate() + 1);
   }
+  
+  // Sort by date and time
+  return eventsInRange.sort((a, b) => {
+    const dateCompare = a.date.localeCompare(b.date);
+    if (dateCompare !== 0) return dateCompare;
+    
+    // If same date, sort by time
+    const timeA = a.time || '00:00';
+    const timeB = b.time || '00:00';
+    return timeA.localeCompare(timeB);
+  });
 }
+
+/**
+ * Create a new event
+ */
+export async function createEvent(eventInput: EventInput): Promise<CalendarEvent> {
+  const newEvent: CalendarEvent = {
+    id: crypto.randomUUID(),
+    ...eventInput,
+  };
+  
+  const allEvents = await loadEventsFromStorage();
+  const updatedEvents = [...allEvents, newEvent];
+  await saveAllEvents(updatedEvents);
+  
+  return newEvent;
+}
+
+/**
+ * Update an existing event
+ */
+export async function updateEvent(
+  id: string,
+  updates: Partial<CalendarEvent>
+): Promise<CalendarEvent> {
+  const allEvents = await loadEventsFromStorage();
+  const eventIndex = allEvents.findIndex(e => e.id === id);
+  
+  if (eventIndex === -1) {
+    throw new Error(`Event with id ${id} not found`);
+  }
+  
+  const updatedEvent: CalendarEvent = {
+    ...allEvents[eventIndex],
+    ...updates,
+    id, // Ensure id cannot be changed
+  };
+  
+  const updatedEvents = [...allEvents];
+  updatedEvents[eventIndex] = updatedEvent;
+  await saveAllEvents(updatedEvents);
+  
+  return updatedEvent;
+}
+
+/**
+ * Delete an event
+ */
+export async function deleteEvent(id: string): Promise<void> {
+  const allEvents = await loadEventsFromStorage();
+  const filteredEvents = allEvents.filter(e => e.id !== id);
+  
+  if (filteredEvents.length === allEvents.length) {
+    throw new Error(`Event with id ${id} not found`);
+  }
+  
+  await saveAllEvents(filteredEvents);
+}
+
+/**
+ * Get a single event by ID
+ */
+export async function getEventById(id: string): Promise<CalendarEvent | null> {
+  const allEvents = await loadEventsFromStorage();
+  return allEvents.find(e => e.id === id) || null;
+}
+
+/**
+ * Get all events (for sync/backup purposes)
+ */
+export async function getAllEvents(): Promise<CalendarEvent[]> {
+  return loadEventsFromStorage();
+}
+
+/**
+ * Clear all events (useful for testing/reset)
+ */
+export async function clearAllEvents(): Promise<void> {
+  return new Promise((resolve) => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      resolve();
+    } catch (error) {
+      console.error('Error clearing events from localStorage:', error);
+      resolve();
+    }
+  });
+}
+

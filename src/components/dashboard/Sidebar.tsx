@@ -1,23 +1,19 @@
-import { Calendar, Home, Shield, Settings, Sparkles, Menu } from 'lucide-react';
-import { useStore, SidebarTab } from '@/lib/store';
+import { Menu } from 'lucide-react';
+import { useUIStore, useDashboardStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getVisibleTabs } from '@/lib/tabs';
 
-const sidebarItems: Array<{ id: SidebarTab; label: string; icon: typeof Calendar }> = [
-  { id: 'calendar', label: 'Calendar', icon: Calendar },
-  { id: 'devices', label: 'Devices', icon: Home },
-  { id: 'security', label: 'Security', icon: Shield },
-  { id: 'settings', label: 'Settings', icon: Settings },
-  { id: 'ai', label: 'AI', icon: Sparkles },
-];
+export function Sidebar() {
+  const { activeSidebarTab, sidebarCollapsed, setActiveSidebarTab, setSidebarCollapsed } = useUIStore();
+  const { config } = useDashboardStore();
+  const visibleTabs = getVisibleTabs(config.visibleTabs);
 
-export function DashboardSidebar() {
-  const { activeSidebarTab, sidebarCollapsed, setActiveSidebarTab, setSidebarCollapsed } = useStore();
-  
   return (
     <aside
       className={cn(
         'bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col',
+        'sticky top-0 h-screen overflow-y-auto',
         sidebarCollapsed ? 'w-16' : 'w-64'
       )}
     >
@@ -36,14 +32,14 @@ export function DashboardSidebar() {
       </div>
       
       <nav className="flex-1 p-2">
-        {sidebarItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeSidebarTab === item.id;
+        {visibleTabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeSidebarTab === tab.id;
           
           return (
             <button
-              key={item.id}
-              onClick={() => setActiveSidebarTab(item.id)}
+              key={tab.id}
+              onClick={() => setActiveSidebarTab(tab.id)}
               className={cn(
                 'w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors mb-1',
                 'hover:bg-sidebar-accent',
@@ -53,7 +49,7 @@ export function DashboardSidebar() {
             >
               <Icon className="h-5 w-5 flex-shrink-0" />
               {!sidebarCollapsed && (
-                <span className="font-medium truncate">{item.label}</span>
+                <span className="font-medium truncate">{tab.name}</span>
               )}
             </button>
           );
@@ -62,3 +58,4 @@ export function DashboardSidebar() {
     </aside>
   );
 }
+

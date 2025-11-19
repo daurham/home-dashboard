@@ -81,6 +81,57 @@ All colors MUST be HSL.
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     
     --radius: 0.75rem;
+    
+    /* Responsive scaling variables - Base (desktop) */
+    --scale-base: 1;
+    --spacing-scale: 1;
+    --font-scale: 1;
+    --touch-min-size: 44px; /* Minimum touch target size (WCAG recommendation) */
+  }
+  
+  /* Small screens / Mobile portrait */
+  @media (max-width: 640px) {
+    :root {
+      --scale-base: 0.9;
+      --spacing-scale: 0.9;
+      --font-scale: 0.9;
+      --touch-min-size: 40px;
+    }
+  }
+  
+  /* Raspberry Pi 720p landscape (1280x720) */
+  @media (min-width: 1280px) and (max-width: 1919px) and (orientation: landscape) {
+    :root {
+      --scale-base: 1.1;
+      --spacing-scale: 1.15;
+      --font-scale: 1.1;
+      --touch-min-size: 56px; /* Larger for touchscreen */
+    }
+  }
+  
+  /* Raspberry Pi 1080p landscape (1920x1080) */
+  @media (min-width: 1920px) and (orientation: landscape) {
+    :root {
+      --scale-base: 1.2;
+      --spacing-scale: 1.25;
+      --font-scale: 1.15;
+      --touch-min-size: 64px; /* Even larger for better touch interaction */
+    }
+  }
+  
+  /* Touch device detection - increase sizes for any touch device */
+  @media (hover: none) and (pointer: coarse) {
+    :root {
+      --touch-min-size: max(56px, var(--touch-min-size));
+      --spacing-scale: max(1.1, var(--spacing-scale));
+    }
+  }
+  
+  /* High DPI displays - scale up further */
+  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    :root {
+      --font-scale: calc(var(--font-scale) * 1.05);
+    }
   }
 
   .dark {
@@ -182,5 +233,45 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-size: calc(1rem * var(--font-scale));
+  }
+  
+  /* Utility classes for responsive scaling */
+  .touch-target {
+    min-width: var(--touch-min-size);
+    min-height: var(--touch-min-size);
+  }
+  
+  .spacing-responsive {
+    gap: calc(1rem * var(--spacing-scale));
+    padding: calc(1rem * var(--spacing-scale));
+  }
+  
+  .text-responsive {
+    font-size: calc(1rem * var(--font-scale));
+  }
+  
+  .text-responsive-sm {
+    font-size: calc(0.875rem * var(--font-scale));
+  }
+  
+  .text-responsive-lg {
+    font-size: calc(1.125rem * var(--font-scale));
+  }
+  
+  .text-responsive-xl {
+    font-size: calc(1.25rem * var(--font-scale));
+  }
+  
+  .text-responsive-2xl {
+    font-size: calc(1.5rem * var(--font-scale));
+  }
+  
+  .text-responsive-3xl {
+    font-size: calc(1.875rem * var(--font-scale));
+  }
+  
+  .text-responsive-4xl {
+    font-size: calc(2.25rem * var(--font-scale));
   }
 }

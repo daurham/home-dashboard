@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useStore, CalendarEvent, RecurrenceType } from '@/lib/store';
+import { useCalendarStore, CalendarEvent, RecurrenceType } from '@/lib/store';
 import {
   Dialog,
   DialogContent,
@@ -20,28 +20,37 @@ import {
 } from '@/components/ui/select';
 
 export function EventModal() {
-  const { selectedDate, setSelectedDate, addEvent } = useStore();
+  const { selectedDate, selectedEvent, setSelectedDate, setSelectedEvent, addEvent, updateEvent, deleteEvent } = useCalendarStore();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [time, setTime] = useState('');
   const [type, setType] = useState<'event' | 'task'>('event');
   const [recurrence, setRecurrence] = useState<RecurrenceType>(null);
   
+  const isEditMode = selectedEvent !== null;
   const isOpen = selectedDate !== null;
   
+  // Load event data when editing
   useEffect(() => {
-    if (!isOpen) {
-      // Reset form when modal closes
+    if (selectedEvent) {
+      setTitle(selectedEvent.title);
+      setDescription(selectedEvent.description || '');
+      setTime(selectedEvent.time || '');
+      setType(selectedEvent.type);
+      setRecurrence(selectedEvent.recurrence || null);
+    } else if (isOpen && !selectedEvent) {
+      // Reset form for new event
       setTitle('');
       setDescription('');
       setTime('');
       setType('event');
       setRecurrence(null);
     }
-  }, [isOpen]);
+  }, [selectedEvent, isOpen]);
   
   const handleClose = () => {
     setSelectedDate(null);
+    setSelectedEvent(null);
   };
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -49,25 +58,45 @@ export function EventModal() {
     
     if (!selectedDate || !title.trim()) return;
     
-    const newEvent: CalendarEvent = {
-      id: crypto.randomUUID(),
-      title: title.trim(),
-      description: description.trim() || undefined,
-      date: selectedDate,
-      time: time || undefined,
-      recurrence,
-      type,
-    };
+    if (isEditMode && selectedEvent) {
+      // Update existing event
+      updateEvent(selectedEvent.id, {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        date: selectedDate,
+        time: time || undefined,
+        recurrence,
+        type,
+      });
+    } else {
+      // Create new event
+      const newEvent: CalendarEvent = {
+        id: crypto.randomUUID(),
+        title: title.trim(),
+        description: description.trim() || undefined,
+        date: selectedDate,
+        time: time || undefined,
+        recurrence,
+        type,
+      };
+      addEvent(newEvent);
+    }
     
-    addEvent(newEvent);
     handleClose();
+  };
+  
+  const handleDelete = () => {
+    if (isEditMode && selectedEvent) {
+      deleteEvent(selectedEvent.id);
+      handleClose();
+    }
   };
   
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create Event</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit Event' : 'Create Event'}</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -137,15 +166,29 @@ export function EventModal() {
           </div>
           
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!title.trim()}>
-              Create Event
-            </Button>
+            <div className="flex justify-between w-full">
+              {isEditMode && (
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  onClick={handleDelete}
+                >
+                  Delete
+                </Button>
+              )}
+              <div className="flex gap-2 ml-auto">
+                <Button type="button" variant="outline" onClick={handleClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={!title.trim()}>
+                  {isEditMode ? 'Save Changes' : 'Create Event'}
+                </Button>
+              </div>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
 }
+

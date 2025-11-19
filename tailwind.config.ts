@@ -12,6 +12,17 @@ export default {
         "2xl": "1400px",
       },
     },
+    screens: {
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px',
+      // Raspberry Pi specific breakpoints
+      'pi-720p': '1280px', // 720p landscape
+      'pi-1080p': '1920px', // 1080p landscape
+      'touch': {'raw': '(hover: none) and (pointer: coarse)'}, // Touch device
+    },
     extend: {
       colors: {
         border: "hsl(var(--border))",
@@ -77,6 +88,35 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      spacing: {
+        'scale': 'calc(1rem * var(--spacing-scale))',
+        'scale-2': 'calc(0.5rem * var(--spacing-scale))',
+        'scale-4': 'calc(1rem * var(--spacing-scale))',
+        'scale-6': 'calc(1.5rem * var(--spacing-scale))',
+        'scale-8': 'calc(2rem * var(--spacing-scale))',
+        'scale-12': 'calc(3rem * var(--spacing-scale))',
+        'scale-16': 'calc(4rem * var(--spacing-scale))',
+      },
+      fontSize: {
+        'scale-xs': 'calc(0.75rem * var(--font-scale))',
+        'scale-sm': 'calc(0.875rem * var(--font-scale))',
+        'scale-base': 'calc(1rem * var(--font-scale))',
+        'scale-lg': 'calc(1.125rem * var(--font-scale))',
+        'scale-xl': 'calc(1.25rem * var(--font-scale))',
+        'scale-2xl': 'calc(1.5rem * var(--font-scale))',
+        'scale-3xl': 'calc(1.875rem * var(--font-scale))',
+        'scale-4xl': 'calc(2.25rem * var(--font-scale))',
+        'scale-5xl': 'calc(3rem * var(--font-scale))',
+        'scale-6xl': 'calc(3.75rem * var(--font-scale))',
+        'scale-7xl': 'calc(4.5rem * var(--font-scale))',
+        'scale-8xl': 'calc(6rem * var(--font-scale))',
+      },
+      minWidth: {
+        'touch': 'var(--touch-min-size)',
+      },
+      minHeight: {
+        'touch': 'var(--touch-min-size)',
       },
       keyframes: {
         "accordion-down": {
