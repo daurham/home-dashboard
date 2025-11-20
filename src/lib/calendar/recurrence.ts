@@ -47,22 +47,40 @@ export function shouldShowRecurringEvent(
 
 /**
  * Get events for a specific date, including recurring events
+ * 
+ * Note: If events are already expanded (from getEventsForRange), this will only
+ * match by direct date. If events are not expanded, it will also check recurrence.
  */
 export function getEventsForDate(
   date: string,
   allEvents: CalendarEvent[]
 ): CalendarEvent[] {
   const targetDate = parseDate(date);
+  const seenEventKeys = new Set<string>();
+  const result: CalendarEvent[] = [];
   
-  return allEvents.filter(event => {
-    // Direct date match
+  for (const event of allEvents) {
+    // Direct date match - this handles both regular events and pre-expanded recurring events
     if (event.date === date) {
-      return true;
+      const eventKey = `${event.id}-${date}`;
+      if (!seenEventKeys.has(eventKey)) {
+        seenEventKeys.add(eventKey);
+        result.push(event);
+      }
+      continue;
     }
     
-    // Check recurrence
-    return shouldShowRecurringEvent(event, targetDate);
-  });
+    // Only check recurrence if the event's date doesn't match
+    // This handles the case where events haven't been pre-expanded
+    // But skip if we've already seen this event ID for this date (prevents duplicates)
+    const eventKey = `${event.id}-${date}`;
+    if (!seenEventKeys.has(eventKey) && shouldShowRecurringEvent(event, targetDate)) {
+      seenEventKeys.add(eventKey);
+      result.push(event);
+    }
+  }
+  
+  return result;
 }
 
 /**

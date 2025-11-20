@@ -10,6 +10,7 @@ interface CalendarState {
   selectedDate: string | null;
   selectedEvent: CalendarEvent | null;
   isLoading: boolean;
+  lastDateRange: { start: Date; end: Date } | null;
   addEvent: (event: Omit<CalendarEvent, 'id'>) => Promise<void>;
   updateEvent: (id: string, event: Partial<CalendarEvent>) => Promise<void>;
   deleteEvent: (id: string) => Promise<void>;
@@ -32,6 +33,7 @@ export const useCalendarStore = create<CalendarState>()((set, get) => ({
   selectedDate: null,
   selectedEvent: null,
   isLoading: false,
+  lastDateRange: null,
   
   loadEvents: async (startDate?: Date, endDate?: Date) => {
     // Prevent multiple simultaneous loads
@@ -45,7 +47,7 @@ export const useCalendarStore = create<CalendarState>()((set, get) => ({
         : getDefaultDateRange();
       
       const events = await calendarService.getEventsForRange(start, end);
-      set({ events, isLoading: false });
+      set({ events, isLoading: false, lastDateRange: { start, end } });
     } catch (error) {
       console.error('Error loading calendar events:', error);
       set({ events: [], isLoading: false });
@@ -59,12 +61,16 @@ export const useCalendarStore = create<CalendarState>()((set, get) => ({
   addEvent: async (eventInput: Omit<CalendarEvent, 'id'>) => {
     try {
       // Create event in database
-      const newEvent = await calendarService.createEvent(eventInput);
+      await calendarService.createEvent(eventInput);
       
-      // Update local state
-      set((state) => ({
-        events: [...state.events, newEvent]
-      }));
+      // Reload events to properly expand recurring events and avoid duplicates
+      // Use the last date range if available, otherwise use default
+      const state = get();
+      if (state.lastDateRange) {
+        await get().loadEvents(state.lastDateRange.start, state.lastDateRange.end);
+      } else {
+        await get().loadEvents();
+      }
     } catch (error) {
       console.error('Error adding event:', error);
       throw error;
@@ -74,12 +80,16 @@ export const useCalendarStore = create<CalendarState>()((set, get) => ({
   updateEvent: async (id: string, updates: Partial<CalendarEvent>) => {
     try {
       // Update event in database
-      const updatedEvent = await calendarService.updateEvent(id, updates);
+      await calendarService.updateEvent(id, updates);
       
-      // Update local state
-      set((state) => ({
-        events: state.events.map((e) => e.id === id ? updatedEvent : e)
-      }));
+      // Reload events to properly expand recurring events and avoid duplicates
+      // Use the last date range if available, otherwise use default
+      const state = get();
+      if (state.lastDateRange) {
+        await get().loadEvents(state.lastDateRange.start, state.lastDateRange.end);
+      } else {
+        await get().loadEvents();
+      }
     } catch (error) {
       console.error('Error updating event:', error);
       throw error;
@@ -91,10 +101,14 @@ export const useCalendarStore = create<CalendarState>()((set, get) => ({
       // Delete event from database
       await calendarService.deleteEvent(id);
       
-      // Update local state
-      set((state) => ({
-        events: state.events.filter((e) => e.id !== id)
-      }));
+      // Reload events to properly handle recurring events
+      // Use the last date range if available, otherwise use default
+      const state = get();
+      if (state.lastDateRange) {
+        await get().loadEvents(state.lastDateRange.start, state.lastDateRange.end);
+      } else {
+        await get().loadEvents();
+      }
       
       // Clear selected event if it was deleted
       const currentSelected = get().selectedEvent;

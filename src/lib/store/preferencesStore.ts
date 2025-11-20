@@ -15,7 +15,7 @@ export const usePreferencesStore = create<PreferencesState>()(
   persist(
     (set) => ({
       timeFormat: '12-hour',
-      units: 'metric',
+      units: 'imperial',
       setTimeFormat: (format) => set({ timeFormat: format }),
       setUnits: (units) => set({ units }),
     }),

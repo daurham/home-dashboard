@@ -16,12 +16,43 @@ export interface CalendarEvent {
 }
 
 /**
+ * Database format for calendar events (as received from API)
+ */
+interface DbCalendarEventInput {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: string; // ISO string
+  end_time: string | null;
+  recurrence_rule: string | { freq: RecurrenceType } | null;
+  metadata: string | { type: 'event' | 'task' } | null;
+  module_instance_id: string | null;
+}
+
+/**
+ * Database format for calendar events (as sent to API)
+ */
+interface DbCalendarEvent {
+  title: string;
+  description: string | null;
+  start_time: string; // ISO string
+  end_time: string | null;
+  recurrence_rule: { freq: RecurrenceType } | null;
+  metadata: { type: 'event' | 'task' };
+  module_instance_id: null;
+}
+
+/**
  * Convert database calendar event to frontend format
  */
-function dbEventToFrontend(dbEvent: any): CalendarEvent {
+function dbEventToFrontend(dbEvent: DbCalendarEventInput): CalendarEvent {
   const startTime = new Date(dbEvent.start_time);
   const date = formatDate(startTime);
-  const time = startTime.toTimeString().slice(0, 5); // HH:MM
+  
+  // Only include time if end_time is set (indicates a specific time was provided)
+  // If end_time is null, the event is all-day (no specific time)
+  const timeStr = startTime.toTimeString().slice(0, 5); // HH:MM
+  const time = dbEvent.end_time ? timeStr : undefined;
   
   // Extract recurrence from recurrence_rule JSONB
   let recurrence: RecurrenceType = null;
@@ -52,7 +83,7 @@ function dbEventToFrontend(dbEvent: any): CalendarEvent {
 /**
  * Convert frontend calendar event to database format
  */
-function frontendEventToDb(event: CalendarEvent | Omit<CalendarEvent, 'id'>): any {
+function frontendEventToDb(event: CalendarEvent | Omit<CalendarEvent, 'id'>): DbCalendarEvent {
   // Combine date and time into start_time
   const dateTimeStr = event.time 
     ? `${event.date}T${event.time}:00`
@@ -91,14 +122,26 @@ function frontendEventToDb(event: CalendarEvent | Omit<CalendarEvent, 'id'>): an
 /**
  * Get events for a date range
  * Includes recurring events that fall within the range
+ * 
+ * Note: We fetch events from a wider range (6 months before and after) to ensure
+ * we get all recurring events that might appear in the visible range, even if
+ * their original date is outside the visible range.
  */
 export async function getEventsForRange(
   start: Date,
   end: Date
 ): Promise<CalendarEvent[]> {
   try {
-    // Fetch events from database
-    const dbEvents = await calendarApi.getByRange(start.toISOString(), end.toISOString());
+    // Expand the fetch range to include recurring events that might appear in the visible range
+    // Fetch 6 months before and after to ensure we get all relevant recurring events
+    const expandedStart = new Date(start);
+    expandedStart.setMonth(expandedStart.getMonth() - 6);
+    
+    const expandedEnd = new Date(end);
+    expandedEnd.setMonth(expandedEnd.getMonth() + 6);
+    
+    // Fetch events from the expanded range
+    const dbEvents = await calendarApi.getByRange(expandedStart.toISOString(), expandedEnd.toISOString());
     
     // Convert to frontend format
     const frontendEvents = dbEvents.map(dbEventToFrontend);

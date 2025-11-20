@@ -51,9 +51,12 @@ export function CalendarDay({ date, events, isToday, isWeekend, onClick }: Calen
           const customColor = isEvent ? eventColor : taskColor;
           const style = customColor ? { backgroundColor: `hsl(${customColor})` } : undefined;
           
+          // Use composite key to ensure uniqueness across different days for recurring events
+          const uniqueKey = `${event.id}-${dateStr}`;
+          
           return (
             <div
-              key={event.id}
+              key={uniqueKey}
               onClick={(e) => handleEventClick(e, event)}
               className={cn(
                 'text-xs px-2 py-1 rounded truncate cursor-pointer text-white',
