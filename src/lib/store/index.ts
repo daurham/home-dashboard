@@ -12,7 +12,7 @@ export { useBudgetStore } from './budgetStore';
 export { useListStore } from './listStore';
 
 // Export all types
-export type { CalendarEvent, RecurrenceType } from './calendarStore';
+export type { CalendarEvent, RecurrenceType } from '@/services/calendarService';
 export type { ThemeMode, AccentColor } from './themeStore';
 export type { SidebarTab } from './uiStore';
 export type { TimeFormat, Units } from './preferencesStore';

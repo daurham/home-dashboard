@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useListStore } from '@/lib/store/listStore';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -45,7 +46,13 @@ export function ListMaker({ slotId }: ListMakerProps) {
     toggleItemCheck,
     toggleItemType,
     clearAllItems,
+    loadListData,
   } = useListStore();
+
+  // Load list data on mount
+  useEffect(() => {
+    loadListData(slotId);
+  }, [slotId, loadListData]);
 
   const listData = getListData(slotId);
   const items = listData.items;
@@ -211,6 +218,9 @@ export function ListMaker({ slotId }: ListMakerProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Item</DialogTitle>
+            <DialogDescription>
+              Add a new item to your list. You can choose between a checkbox or bullet point.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -262,6 +272,9 @@ export function ListMaker({ slotId }: ListMakerProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Item</DialogTitle>
+            <DialogDescription>
+              Update the item text or change its type.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">

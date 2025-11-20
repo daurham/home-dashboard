@@ -1,11 +1,12 @@
-import { CalendarEvent, RecurrenceType } from '@/lib/store';
 import { formatDate, parseDate } from '@/lib/calendar';
 import { getEventsForDate } from '@/lib/calendar/recurrence';
+import { calendarApi } from './apiService';
 
-/**
- * Input type for creating a new event (without id)
- */
-export interface EventInput {
+// Export types for use in stores
+export type RecurrenceType = 'daily' | 'weekly' | 'monthly' | null;
+
+export interface CalendarEvent {
+  id: string;
   title: string;
   description?: string;
   date: string; // YYYY-MM-DD
@@ -15,48 +16,76 @@ export interface EventInput {
 }
 
 /**
- * Storage key for calendar events in localStorage
+ * Convert database calendar event to frontend format
  */
-const STORAGE_KEY = 'calendar-events';
+function dbEventToFrontend(dbEvent: any): CalendarEvent {
+  const startTime = new Date(dbEvent.start_time);
+  const date = formatDate(startTime);
+  const time = startTime.toTimeString().slice(0, 5); // HH:MM
+  
+  // Extract recurrence from recurrence_rule JSONB
+  let recurrence: RecurrenceType = null;
+  if (dbEvent.recurrence_rule) {
+    const rule = typeof dbEvent.recurrence_rule === 'string' 
+      ? JSON.parse(dbEvent.recurrence_rule) 
+      : dbEvent.recurrence_rule;
+    recurrence = rule.freq || null;
+  }
+  
+  // Extract type from metadata
+  const metadata = dbEvent.metadata 
+    ? (typeof dbEvent.metadata === 'string' ? JSON.parse(dbEvent.metadata) : dbEvent.metadata)
+    : {};
+  const type = metadata.type || 'event';
 
-/**
- * Get all events from localStorage (internal helper)
- */
-async function loadEventsFromStorage(): Promise<CalendarEvent[]> {
-  return new Promise((resolve) => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const events = JSON.parse(stored) as CalendarEvent[];
-        // Validate and ensure dates are strings
-        const validEvents = events.map(event => ({
-          ...event,
-          date: event.date, // Ensure date is string
-        }));
-        resolve(validEvents);
-      } else {
-        resolve([]);
-      }
-    } catch (error) {
-      console.error('Error reading events from localStorage:', error);
-      resolve([]);
-    }
-  });
+  return {
+    id: dbEvent.id,
+    title: dbEvent.title,
+    description: dbEvent.description || undefined,
+    date,
+    time,
+    recurrence,
+    type: type as 'event' | 'task',
+  };
 }
 
 /**
- * Save all events to localStorage
+ * Convert frontend calendar event to database format
  */
-async function saveAllEvents(events: CalendarEvent[]): Promise<void> {
-  return new Promise((resolve) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
-      resolve();
-    } catch (error) {
-      console.error('Error saving events to localStorage:', error);
-      resolve();
-    }
-  });
+function frontendEventToDb(event: CalendarEvent | Omit<CalendarEvent, 'id'>): any {
+  // Combine date and time into start_time
+  const dateTimeStr = event.time 
+    ? `${event.date}T${event.time}:00`
+    : `${event.date}T00:00:00`;
+  const startTime = new Date(dateTimeStr).toISOString();
+  
+  // Calculate end_time (default to 1 hour after start if no time specified)
+  let endTime: string | null = null;
+  if (event.time) {
+    const end = new Date(dateTimeStr);
+    end.setHours(end.getHours() + 1);
+    endTime = end.toISOString();
+  }
+
+  // Build recurrence_rule
+  const recurrenceRule = event.recurrence 
+    ? { freq: event.recurrence }
+    : null;
+
+  // Build metadata
+  const metadata = {
+    type: event.type || 'event',
+  };
+
+  return {
+    title: event.title,
+    description: event.description || null,
+    start_time: startTime,
+    end_time: endTime,
+    recurrence_rule: recurrenceRule,
+    metadata,
+    module_instance_id: null, // Can be set if needed
+  };
 }
 
 /**
@@ -67,73 +96,79 @@ export async function getEventsForRange(
   start: Date,
   end: Date
 ): Promise<CalendarEvent[]> {
-  const allEvents = await loadEventsFromStorage();
-  const eventsInRange: CalendarEvent[] = [];
-  const seenEventKeys = new Set<string>();
-  
-  // Iterate through each day in the range
-  const currentDate = new Date(start);
-  currentDate.setHours(0, 0, 0, 0);
-  
-  const endDate = new Date(end);
-  endDate.setHours(23, 59, 59, 999);
-  
-  while (currentDate <= endDate) {
-    const dateStr = formatDate(currentDate);
-    const dayEvents = getEventsForDate(dateStr, allEvents);
+  try {
+    // Fetch events from database
+    const dbEvents = await calendarApi.getByRange(start.toISOString(), end.toISOString());
     
-    // Add events for this day, avoiding duplicates
-    dayEvents.forEach(event => {
-      // Create a unique key: original event ID + date
-      // For recurring events, this allows multiple instances of the same event
-      const eventKey = `${event.id}-${dateStr}`;
+    // Convert to frontend format
+    const frontendEvents = dbEvents.map(dbEventToFrontend);
+    
+    // Handle recurring events that fall within the range
+    const eventsInRange: CalendarEvent[] = [];
+    const seenEventKeys = new Set<string>();
+    
+    // Iterate through each day in the range
+    const currentDate = new Date(start);
+    currentDate.setHours(0, 0, 0, 0);
+    
+    const endDate = new Date(end);
+    endDate.setHours(23, 59, 59, 999);
+    
+    while (currentDate <= endDate) {
+      const dateStr = formatDate(currentDate);
+      const dayEvents = getEventsForDate(dateStr, frontendEvents);
       
-      if (!seenEventKeys.has(eventKey)) {
-        seenEventKeys.add(eventKey);
+      // Add events for this day, avoiding duplicates
+      dayEvents.forEach(event => {
+        const eventKey = `${event.id}-${dateStr}`;
         
-        // For recurring events on dates other than the original, create a virtual instance
-        if (event.recurrence && event.date !== dateStr) {
-          eventsInRange.push({
-            ...event,
-            date: dateStr,
-            // Keep original ID for reference, but mark as recurring instance
-            id: event.id, // Keep original ID to maintain relationship
-          });
-        } else {
-          eventsInRange.push(event);
+        if (!seenEventKeys.has(eventKey)) {
+          seenEventKeys.add(eventKey);
+          
+          // For recurring events on dates other than the original, create a virtual instance
+          if (event.recurrence && event.date !== dateStr) {
+            eventsInRange.push({
+              ...event,
+              date: dateStr,
+              id: event.id, // Keep original ID to maintain relationship
+            });
+          } else {
+            eventsInRange.push(event);
+          }
         }
-      }
+      });
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // Sort by date and time
+    return eventsInRange.sort((a, b) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      if (dateCompare !== 0) return dateCompare;
+      
+      const timeA = a.time || '00:00';
+      const timeB = b.time || '00:00';
+      return timeA.localeCompare(timeB);
     });
-    
-    currentDate.setDate(currentDate.getDate() + 1);
+  } catch (error) {
+    console.error('Error fetching events from API:', error);
+    // Fallback to empty array on error
+    return [];
   }
-  
-  // Sort by date and time
-  return eventsInRange.sort((a, b) => {
-    const dateCompare = a.date.localeCompare(b.date);
-    if (dateCompare !== 0) return dateCompare;
-    
-    // If same date, sort by time
-    const timeA = a.time || '00:00';
-    const timeB = b.time || '00:00';
-    return timeA.localeCompare(timeB);
-  });
 }
 
 /**
  * Create a new event
  */
-export async function createEvent(eventInput: EventInput): Promise<CalendarEvent> {
-  const newEvent: CalendarEvent = {
-    id: crypto.randomUUID(),
-    ...eventInput,
-  };
-  
-  const allEvents = await loadEventsFromStorage();
-  const updatedEvents = [...allEvents, newEvent];
-  await saveAllEvents(updatedEvents);
-  
-  return newEvent;
+export async function createEvent(eventInput: Omit<CalendarEvent, 'id'>): Promise<CalendarEvent> {
+  try {
+    const dbData = frontendEventToDb(eventInput);
+    const dbEvent = await calendarApi.create(dbData);
+    return dbEventToFrontend(dbEvent);
+  } catch (error) {
+    console.error('Error creating event:', error);
+    throw error;
+  }
 }
 
 /**
@@ -143,67 +178,72 @@ export async function updateEvent(
   id: string,
   updates: Partial<CalendarEvent>
 ): Promise<CalendarEvent> {
-  const allEvents = await loadEventsFromStorage();
-  const eventIndex = allEvents.findIndex(e => e.id === id);
-  
-  if (eventIndex === -1) {
-    throw new Error(`Event with id ${id} not found`);
+  try {
+    // Get current event
+    const currentEvent = await getEventById(id);
+    if (!currentEvent) {
+      throw new Error(`Event with id ${id} not found`);
+    }
+
+    // Merge updates
+    const updatedEvent = { ...currentEvent, ...updates };
+    const dbData = frontendEventToDb(updatedEvent);
+    
+    const dbEvent = await calendarApi.update(id, dbData);
+    return dbEventToFrontend(dbEvent);
+  } catch (error) {
+    console.error('Error updating event:', error);
+    throw error;
   }
-  
-  const updatedEvent: CalendarEvent = {
-    ...allEvents[eventIndex],
-    ...updates,
-    id, // Ensure id cannot be changed
-  };
-  
-  const updatedEvents = [...allEvents];
-  updatedEvents[eventIndex] = updatedEvent;
-  await saveAllEvents(updatedEvents);
-  
-  return updatedEvent;
 }
 
 /**
  * Delete an event
  */
 export async function deleteEvent(id: string): Promise<void> {
-  const allEvents = await loadEventsFromStorage();
-  const filteredEvents = allEvents.filter(e => e.id !== id);
-  
-  if (filteredEvents.length === allEvents.length) {
-    throw new Error(`Event with id ${id} not found`);
+  try {
+    await calendarApi.delete(id);
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    throw error;
   }
-  
-  await saveAllEvents(filteredEvents);
 }
 
 /**
  * Get a single event by ID
  */
 export async function getEventById(id: string): Promise<CalendarEvent | null> {
-  const allEvents = await loadEventsFromStorage();
-  return allEvents.find(e => e.id === id) || null;
+  try {
+    const dbEvent = await calendarApi.getById(id);
+    return dbEventToFrontend(dbEvent);
+  } catch (error) {
+    console.error('Error fetching event:', error);
+    return null;
+  }
 }
 
 /**
  * Get all events (for sync/backup purposes)
  */
 export async function getAllEvents(): Promise<CalendarEvent[]> {
-  return loadEventsFromStorage();
+  try {
+    const dbEvents = await calendarApi.getAll();
+    return dbEvents.map(dbEventToFrontend);
+  } catch (error) {
+    console.error('Error fetching all events:', error);
+    return [];
+  }
 }
 
 /**
  * Clear all events (useful for testing/reset)
  */
 export async function clearAllEvents(): Promise<void> {
-  return new Promise((resolve) => {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-      resolve();
-    } catch (error) {
-      console.error('Error clearing events from localStorage:', error);
-      resolve();
-    }
-  });
+  try {
+    const events = await getAllEvents();
+    await Promise.all(events.map(event => deleteEvent(event.id)));
+  } catch (error) {
+    console.error('Error clearing events:', error);
+    throw error;
+  }
 }
-

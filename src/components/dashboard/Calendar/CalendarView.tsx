@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -11,9 +11,20 @@ const weekDaysSunday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const { events, setSelectedDate } = useCalendarStore();
+  const { events, setSelectedDate, loadEvents } = useCalendarStore();
   const { config } = useDashboardStore();
   const firstDayOfWeek = config.calendar.firstDayOfWeek;
+  
+  // Load events when component mounts or date range changes
+  useEffect(() => {
+    // Calculate date range for the visible weeks (4 weeks)
+    const weeks = getFourWeeks(currentDate, firstDayOfWeek);
+    const startDate = weeks[0][0];
+    const endDate = weeks[weeks.length - 1][6];
+    
+    // Load events for the visible range
+    loadEvents(startDate, endDate);
+  }, [currentDate, firstDayOfWeek, loadEvents]);
   
   const weeks = getFourWeeks(currentDate, firstDayOfWeek);
   const currentWeekStart = getWeekStart(new Date(), firstDayOfWeek);

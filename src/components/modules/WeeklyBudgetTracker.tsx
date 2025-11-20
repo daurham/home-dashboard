@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useBudgetStore } from '@/lib/store/budgetStore';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -46,7 +47,13 @@ export function WeeklyBudgetTracker({ slotId }: WeeklyBudgetTrackerProps) {
     clearAllPurchases,
     getRemainingBudget,
     getTotalSpent,
+    loadBudgetData,
   } = useBudgetStore();
+
+  // Load budget data on mount
+  useEffect(() => {
+    loadBudgetData(slotId);
+  }, [slotId, loadBudgetData]);
 
   const budgetData = getBudgetData(slotId);
   const weeklyBudget = budgetData.weeklyBudget;
@@ -324,6 +331,9 @@ export function WeeklyBudgetTracker({ slotId }: WeeklyBudgetTrackerProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Purchase</DialogTitle>
+            <DialogDescription>
+              Record a new purchase to track your spending.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -364,6 +374,9 @@ export function WeeklyBudgetTracker({ slotId }: WeeklyBudgetTrackerProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Purchase</DialogTitle>
+            <DialogDescription>
+              Update the purchase details.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">

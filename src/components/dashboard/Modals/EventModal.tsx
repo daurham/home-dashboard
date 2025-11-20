@@ -3,6 +3,7 @@ import { useCalendarStore, CalendarEvent, RecurrenceType } from '@/lib/store';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -53,42 +54,50 @@ export function EventModal() {
     setSelectedEvent(null);
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedDate || !title.trim()) return;
     
-    if (isEditMode && selectedEvent) {
-      // Update existing event
-      updateEvent(selectedEvent.id, {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        date: selectedDate,
-        time: time || undefined,
-        recurrence,
-        type,
-      });
-    } else {
-      // Create new event
-      const newEvent: CalendarEvent = {
-        id: crypto.randomUUID(),
-        title: title.trim(),
-        description: description.trim() || undefined,
-        date: selectedDate,
-        time: time || undefined,
-        recurrence,
-        type,
-      };
-      addEvent(newEvent);
+    try {
+      if (isEditMode && selectedEvent) {
+        // Update existing event
+        await updateEvent(selectedEvent.id, {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          date: selectedDate,
+          time: time || undefined,
+          recurrence,
+          type,
+        });
+      } else {
+        // Create new event
+        await addEvent({
+          title: title.trim(),
+          description: description.trim() || undefined,
+          date: selectedDate,
+          time: time || undefined,
+          recurrence,
+          type,
+        });
+      }
+      
+      handleClose();
+    } catch (error) {
+      console.error('Error saving event:', error);
+      // You could add a toast notification here
     }
-    
-    handleClose();
   };
   
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (isEditMode && selectedEvent) {
-      deleteEvent(selectedEvent.id);
-      handleClose();
+      try {
+        await deleteEvent(selectedEvent.id);
+        handleClose();
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        // You could add a toast notification here
+      }
     }
   };
   
@@ -97,6 +106,11 @@ export function EventModal() {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{isEditMode ? 'Edit Event' : 'Create Event'}</DialogTitle>
+          <DialogDescription>
+            {isEditMode 
+              ? 'Update the event details below.' 
+              : 'Fill in the details to create a new calendar event.'}
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
