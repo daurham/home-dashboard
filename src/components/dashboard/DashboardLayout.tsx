@@ -1,4 +1,5 @@
 import { Sidebar } from './Sidebar';
+import { RightSidebar } from './RightSidebar';
 import { EventModal } from './Modals/EventModal';
 
 interface DashboardLayoutProps {
@@ -15,6 +16,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {children}
         </div>
       </main>
+      
+      <RightSidebar />
       
       <EventModal />
     </div>

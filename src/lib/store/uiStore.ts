@@ -6,8 +6,10 @@ export type SidebarTab = 'calendar' | 'devices' | 'security' | 'settings' | 'ai'
 interface UIState {
   activeSidebarTab: SidebarTab;
   sidebarCollapsed: boolean;
+  rightSidebarCollapsed: boolean;
   setActiveSidebarTab: (tab: SidebarTab) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  setRightSidebarCollapsed: (collapsed: boolean) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -15,8 +17,10 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       activeSidebarTab: 'calendar',
       sidebarCollapsed: false,
+      rightSidebarCollapsed: false,
       setActiveSidebarTab: (tab) => set({ activeSidebarTab: tab }),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      setRightSidebarCollapsed: (collapsed) => set({ rightSidebarCollapsed: collapsed }),
     }),
     {
       name: 'ui-storage',
