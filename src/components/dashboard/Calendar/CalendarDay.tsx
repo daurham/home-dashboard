@@ -30,7 +30,7 @@ export function CalendarDay({ date, events, isToday, isWeekend, onClick }: Calen
     <button
       onClick={() => onClick(date)}
       className={cn(
-        'relative min-h-[120px] p-3 pt-8 text-left transition-colors hover:bg-accent/50',
+        'relative min-h-[80px] md:min-h-[120px] p-2 md:p-3 pt-6 md:pt-8 text-left transition-colors hover:bg-accent/50',
         'border-r border-border last:border-r-0',
         'focus:outline-none focus:ring-2 focus:ring-ring',
         isWeekend && 'bg-calendar-weekend',
@@ -39,13 +39,13 @@ export function CalendarDay({ date, events, isToday, isWeekend, onClick }: Calen
     >
       <div
         className={cn(
-          'absolute top-2 left-2 text-sm font-semibold',
+          'absolute top-1 left-1 md:top-2 md:left-2 text-xs md:text-sm font-semibold',
           isToday && 'text-calendar-today'
         )}
       >
         {date.getDate()}
       </div>
-      <div className="space-y-1">
+      <div className="space-y-0.5 md:space-y-1">
         {dayEvents.slice(0, 3).map((event) => {
           const isEvent = event.type === 'event';
           const customColor = isEvent ? eventColor : taskColor;
@@ -59,14 +59,30 @@ export function CalendarDay({ date, events, isToday, isWeekend, onClick }: Calen
               key={uniqueKey}
               onClick={(e) => handleEventClick(e, event)}
               className={cn(
-                'text-xs px-2 py-1 rounded truncate cursor-pointer text-white',
+                'px-1 md:px-1.5 py-0.5 rounded cursor-pointer text-white',
                 'hover:opacity-80 transition-opacity',
+                'text-[9px] sm:text-[10px] md:text-[11px] leading-tight',
+                'w-full',
                 !customColor && (isEvent ? 'bg-calendar-event' : 'bg-calendar-task')
               )}
               style={style}
             >
-              {event.time && `${formatTimeString(event.time, timeFormat)} `}
-              {event.title}
+              <div className="flex items-start gap-0.5 md:gap-1 w-full overflow-hidden">
+                {event.time && (
+                  <span className="whitespace-nowrap flex-shrink-0 text-[8px] sm:text-[9px] md:text-[10px]">
+                    {formatTimeString(event.time, timeFormat)}
+                  </span>
+                )}
+                <span 
+                  className="whitespace-normal min-w-0 flex-1"
+                  style={{ 
+                    wordBreak: 'normal',
+                    overflowWrap: 'normal'
+                  }}
+                >
+                  {event.title}
+                </span>
+              </div>
             </div>
           );
         })}

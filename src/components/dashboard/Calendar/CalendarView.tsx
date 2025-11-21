@@ -50,23 +50,37 @@ export function CalendarView() {
     setSelectedDate(formatDate(date));
   };
   
+  // Format today's date for display: "Thursday, Nov 20 2025"
+  const formatCurrentDate = () => {
+    const today = new Date();
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    };
+    return today.toLocaleDateString('en-US', options);
+  };
+  
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Calendar</h2>
+    <div className="space-y-2 md:space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl text-foreground">
+          {formatCurrentDate()}
+        </h2>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="icon"
             onClick={handlePrevWeek}
-            className="h-9 w-9"
+            className="h-8 w-8 md:h-9 md:w-9"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
             onClick={() => setCurrentDate(new Date())}
-            className="h-9"
+            className="h-8 px-3 md:h-9 md:px-4 text-xs md:text-sm"
           >
             Today
           </Button>
@@ -74,7 +88,7 @@ export function CalendarView() {
             variant="outline"
             size="icon"
             onClick={handleNextWeek}
-            className="h-9 w-9"
+            className="h-8 w-8 md:h-9 md:w-9"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -87,7 +101,7 @@ export function CalendarView() {
           {weekDays.map((day) => (
             <div
               key={day}
-              className="p-3 text-center text-sm font-semibold text-muted-foreground"
+              className="p-2 md:p-3 text-center text-xs md:text-sm font-semibold text-muted-foreground"
             >
               {day}
             </div>

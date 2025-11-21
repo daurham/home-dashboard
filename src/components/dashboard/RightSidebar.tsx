@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getModuleById } from '@/lib/modules/registry';
 import { ModuleSlot } from '@/components/modules/ModuleSlot';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +16,7 @@ import {
 export function RightSidebar() {
   const { rightSidebarCollapsed, setRightSidebarCollapsed } = useUIStore();
   const { modules, removeModule } = useModuleStore();
+  const isMobile = useIsMobile();
 
   const renderModule = (moduleType: string | null, slotIndex: 0 | 1) => {
     if (!moduleType) {
@@ -56,8 +59,44 @@ export function RightSidebar() {
     );
   };
 
+  // Mobile: Show as Sheet from right
+  if (isMobile) {
+    return (
+      <Sheet open={!rightSidebarCollapsed} onOpenChange={(open) => setRightSidebarCollapsed(!open)}>
+        <SheetContent side="right" className="w-[90vw] sm:w-[400px] bg-sidebar text-sidebar-foreground p-0 [&>button]:hidden">
+          <div className="flex flex-col h-full">
+            <div className="p-4 flex items-center justify-between border-b border-sidebar-border flex-shrink-0">
+              <h2 className="text-lg font-semibold text-sidebar-foreground">Modules</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setRightSidebarCollapsed(true)}
+                className="text-sidebar-foreground hover:bg-sidebar-accent"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* First Module Slot */}
+              <div className="min-h-[280px]">
+                {renderModule(modules[0], 0)}
+              </div>
+
+              {/* Second Module Slot */}
+              <div className="min-h-[280px]">
+                {renderModule(modules[1], 1)}
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop: Show as regular sidebar
   return (
-    <div className="relative">
+    <div className="relative hidden md:block">
       <aside
         className={cn(
           'bg-sidebar border-l border-sidebar-border transition-all duration-300 flex flex-col',

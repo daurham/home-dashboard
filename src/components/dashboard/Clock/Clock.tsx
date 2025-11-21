@@ -7,23 +7,26 @@ export function Clock() {
   const clockConfig = config.clock;
   const [time, setTime] = useState(new Date());
   
-  // Don't render if disabled
-  if (!clockConfig.enabled) {
-    return null;
-  }
-  
   // Determine update interval based on what's shown
   const updateInterval = clockConfig.showMilliseconds ? 10 : 
                         clockConfig.showSeconds ? 1000 : 
                         60000; // Update every minute if no seconds
   
   useEffect(() => {
+    // Only set up timer if clock is enabled
+    if (!clockConfig.enabled) return;
+    
     const timer = setInterval(() => {
       setTime(new Date());
     }, updateInterval);
     
     return () => clearInterval(timer);
-  }, [updateInterval]);
+  }, [updateInterval, clockConfig.enabled]);
+  
+  // Don't render if disabled
+  if (!clockConfig.enabled) {
+    return null;
+  }
   
   // Format time based on config
   const formatTime = () => {
@@ -67,23 +70,9 @@ export function Clock() {
     );
   };
   
-  // Format date
-  const dateOptions: Intl.DateTimeFormatOptions = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  };
-  const formattedDate = time.toLocaleDateString('en-US', dateOptions);
-  
   return (
     <div className="text-center">
       {formatTime()}
-      {clockConfig.showDate && (
-        <div className="text-xl md:text-2xl text-muted-foreground">
-          {formattedDate}
-        </div>
-      )}
     </div>
   );
 }

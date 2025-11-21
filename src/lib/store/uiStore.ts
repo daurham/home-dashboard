@@ -12,12 +12,20 @@ interface UIState {
   setRightSidebarCollapsed: (collapsed: boolean) => void;
 }
 
+// Check if we're on mobile to set default collapsed state
+const getInitialSidebarState = () => {
+  if (typeof window !== 'undefined') {
+    return window.innerWidth < 768; // Mobile breakpoint
+  }
+  return false;
+};
+
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
       activeSidebarTab: 'calendar',
-      sidebarCollapsed: false,
-      rightSidebarCollapsed: false,
+      sidebarCollapsed: getInitialSidebarState(), // Collapsed by default on mobile
+      rightSidebarCollapsed: getInitialSidebarState(), // Collapsed by default on mobile
       setActiveSidebarTab: (tab) => set({ activeSidebarTab: tab }),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       setRightSidebarCollapsed: (collapsed) => set({ rightSidebarCollapsed: collapsed }),
