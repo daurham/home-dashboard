@@ -5,7 +5,7 @@ import { useDashboardStore } from '@/lib/store';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
-import { Cloud, CloudRain, CloudSnow, Sun, CloudLightning } from 'lucide-react';
+import { Cloud, CloudRain, CloudSnow, Sun, CloudLightning, Moon } from 'lucide-react';
 import { WeatherService, WeatherData } from '@/services/weatherService';
 import { usePreferencesStore } from '@/lib/store';
 
@@ -77,16 +77,21 @@ function MobileWeather() {
   
   useEffect(() => {
     const loadWeather = async () => {
-      const service = WeatherService.getInstance();
-      const data = await service.getCurrentWeather();
-      setWeather(data);
-      setLoading(false);
+      try {
+        const service = WeatherService.getInstance();
+        const data = await service.getCurrentWeather(units);
+        setWeather(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to load weather:', error);
+        setLoading(false);
+      }
     };
     
     loadWeather();
     const interval = setInterval(loadWeather, 10 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [weatherConfig.showCurrentWeather]);
+  }, [weatherConfig.showCurrentWeather, units]);
   
   if (loading || !weather) {
     return (
@@ -94,14 +99,22 @@ function MobileWeather() {
     );
   }
   
-  const WeatherIcon = weatherIcons[weather.condition];
+  // Use Moon icon for clear skies at night, otherwise use the condition icon
+  const WeatherIcon = weather.condition === 'sunny' && weather.isDaytime === false 
+    ? Moon 
+    : weatherIcons[weather.condition];
   const temperatureUnit = units === 'metric' ? '°C' : '°F';
   
   return (
     <div className="flex items-center gap-2">
       <WeatherIcon className="h-5 w-5 text-weather-icon" />
-      <div className="text-sm font-medium text-foreground">
-        {weather.temperature}{temperatureUnit}
+      <div>
+        {weather.city && (
+          <div className="text-xs text-muted-foreground">{weather.city}</div>
+        )}
+        <div className="text-sm font-medium text-foreground">
+          {weather.temperature}{temperatureUnit}
+        </div>
       </div>
     </div>
   );

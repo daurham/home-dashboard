@@ -43,7 +43,7 @@ export interface APIConfig {
 export const defaultAPIConfig: APIConfig = {
   weather: {
     enabled: true,
-    provider: 'mock',
+    provider: 'mock', // Will be overridden by loadAPIConfig if API key is present
     updateInterval: 10 * 60 * 1000, // 10 minutes
     units: 'metric',
   },
@@ -73,6 +73,10 @@ export async function loadAPIConfig(): Promise<APIConfig> {
   // Override with environment variables
   if (import.meta.env.VITE_WEATHER_API_KEY) {
     config.weather.apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+    // Auto-set provider to openweathermap if API key is present and provider not explicitly set
+    if (!import.meta.env.VITE_WEATHER_PROVIDER) {
+      config.weather.provider = 'openweathermap';
+    }
   }
   if (import.meta.env.VITE_WEATHER_PROVIDER) {
     config.weather.provider = import.meta.env.VITE_WEATHER_PROVIDER as WeatherAPIConfig['provider'];
@@ -95,6 +99,9 @@ export async function loadAPIConfig(): Promise<APIConfig> {
     config.homeAssistant.accessToken = import.meta.env.VITE_HOME_ASSISTANT_TOKEN;
   }
 
+  // Cache the config
+  setAPIConfig(config);
+
   // TODO: Load from external source (database/Home Assistant)
   // Example:
   // const response = await fetch('/api/config/api');
@@ -103,12 +110,24 @@ export async function loadAPIConfig(): Promise<APIConfig> {
   return config;
 }
 
+// Cache for loaded config
+let cachedConfig: APIConfig | null = null;
+
 /**
  * Get API config (with fallback to defaults and env vars)
+ * This will use cached config if available, otherwise return defaults
  */
 export function getAPIConfig(): APIConfig {
-  // In the future, this can check for loaded config
-  return defaultAPIConfig;
+  // Return cached config if available, otherwise return defaults
+  // Components should call loadAPIConfig() once on mount to ensure env vars are loaded
+  return cachedConfig || defaultAPIConfig;
+}
+
+/**
+ * Set the cached API config (called by loadAPIConfig)
+ */
+export function setAPIConfig(config: APIConfig): void {
+  cachedConfig = config;
 }
 
 /**

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Cloud, CloudRain, CloudSnow, Sun, CloudLightning } from 'lucide-react';
+import { Cloud, CloudRain, CloudSnow, Sun, CloudLightning, Moon } from 'lucide-react';
 import { WeatherService, WeatherData } from '@/services/weatherService';
 import { Card } from '@/components/ui/card';
 import { useDashboardStore, usePreferencesStore } from '@/lib/store';
@@ -31,10 +31,15 @@ export function WeatherWidget() {
     }
     
     const loadWeather = async () => {
-      const service = WeatherService.getInstance();
-      const data = await service.getCurrentWeather();
-      setWeather(data);
-      setLoading(false);
+      try {
+        const service = WeatherService.getInstance();
+        const data = await service.getCurrentWeather(units);
+        setWeather(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to load weather:', error);
+        setLoading(false);
+      }
     };
     
     loadWeather();
@@ -42,7 +47,7 @@ export function WeatherWidget() {
     // Refresh weather every 10 minutes
     const interval = setInterval(loadWeather, 10 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [weatherConfig.showCurrentWeather]);
+  }, [weatherConfig.showCurrentWeather, units]);
   
   if (!weatherConfig.showCurrentWeather) {
     return null;
@@ -56,20 +61,33 @@ export function WeatherWidget() {
     );
   }
   
-  const WeatherIcon = weatherIcons[weather.condition];
+  // Use Moon icon for clear skies at night, otherwise use the condition icon
+  const WeatherIcon = weather.condition === 'sunny' && weather.isDaytime === false 
+    ? Moon 
+    : weatherIcons[weather.condition];
   const temperatureUnit = units === 'metric' ? '°C' : '°F';
   const windUnit = units === 'metric' ? 'km/h' : 'mph';
+  
+  // Update condition text for night clear skies
+  const conditionText = weather.condition === 'sunny' && weather.isDaytime === false 
+    ? 'clear' 
+    : weather.condition;
   
   return (
     <Card className="p-6 bg-card">
       <div className="flex items-center gap-4">
         <WeatherIcon className="h-12 w-12 text-weather-icon" />
-        <div>
+        <div className="flex-1">
+          {weather.city && (
+            <div className="text-sm font-medium text-muted-foreground mb-1">
+              {weather.city}
+            </div>
+          )}
           <div className="text-3xl font-bold text-foreground">
             {weather.temperature}{temperatureUnit}
           </div>
           <div className="text-sm text-muted-foreground capitalize">
-            {weather.condition}
+            {conditionText}
           </div>
         </div>
         <div className="ml-auto text-sm text-muted-foreground">
