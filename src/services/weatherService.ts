@@ -54,12 +54,37 @@ export class WeatherService {
 
   /**
    * Get user's location using browser geolocation API
+   * Falls back to IP-based geolocation if browser geolocation fails
    */
   private async getLocation(): Promise<{ lat: number; lon: number }> {
     if (this.cachedLocation) {
       return this.cachedLocation;
     }
 
+    // Try browser geolocation first
+    try {
+      const location = await this.getBrowserLocation();
+      this.cachedLocation = location;
+      return location;
+    } catch (browserError) {
+      console.warn('Browser geolocation failed, trying IP-based geolocation:', browserError);
+      
+      // Fallback to IP-based geolocation
+      try {
+        const location = await this.getLocationFromIP();
+        this.cachedLocation = location;
+        return location;
+      } catch (ipError) {
+        console.error('IP-based geolocation also failed:', ipError);
+        throw new Error(`Failed to get location: ${browserError instanceof Error ? browserError.message : String(browserError)}`);
+      }
+    }
+  }
+
+  /**
+   * Get location using browser geolocation API
+   */
+  private async getBrowserLocation(): Promise<{ lat: number; lon: number }> {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
         reject(new Error('Geolocation is not supported by your browser'));
@@ -72,11 +97,19 @@ export class WeatherService {
             lat: position.coords.latitude,
             lon: position.coords.longitude,
           };
-          this.cachedLocation = location;
           resolve(location);
         },
         (error) => {
-          reject(new Error(`Geolocation error: ${error.message}`));
+          // Provide more detailed error messages
+          let errorMessage = `Geolocation error: ${error.message}`;
+          if (error.code === error.PERMISSION_DENIED) {
+            errorMessage += ' (Permission denied - check browser settings or use HTTPS)';
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            errorMessage += ' (Position unavailable)';
+          } else if (error.code === error.TIMEOUT) {
+            errorMessage += ' (Request timeout)';
+          }
+          reject(new Error(errorMessage));
         },
         {
           timeout: 10000,
@@ -84,6 +117,39 @@ export class WeatherService {
         }
       );
     });
+  }
+
+  /**
+   * Get location using IP-based geolocation as fallback
+   */
+  private async getLocationFromIP(): Promise<{ lat: number; lon: number }> {
+    try {
+      // Use a free IP geolocation service
+      const response = await fetch('https://ipapi.co/json/', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`IP geolocation API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.latitude && data.longitude) {
+        return {
+          lat: parseFloat(data.latitude),
+          lon: parseFloat(data.longitude),
+        };
+      } else {
+        throw new Error('Invalid response from IP geolocation service');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`IP geolocation failed: ${errorMessage}`);
+    }
   }
 
   /**
@@ -159,8 +225,6 @@ export class WeatherService {
     }
 
     const data: OpenWeatherMapResponse = await response.json();
-    console.log('url:', url);
-    console.log('Weather data:', data);
 
     // Determine if it's daytime based on sunrise/sunset
     let isDaytime: boolean | undefined;
@@ -191,26 +255,19 @@ export class WeatherService {
   async getCurrentWeather(units: 'metric' | 'imperial' = 'metric'): Promise<WeatherData> {
     try {
       const config = await loadAPIConfig();
-      console.log('config:', config);
       // Check if OpenWeatherMap is configured
       if (
         config.weather.provider === 'openweathermap' &&
         config.weather.apiKey &&
         config.weather.enabled
       ) {
-        console.log('Weather API Check Passes');
         // Validate API key before attempting to use it
         if (!config.weather.apiKey.trim()) {
           console.warn('OpenWeatherMap API key is empty, falling back to mock data');
         } else {
-          console.log('OpenWeatherMap API key is not empty');
-          console.log('Getting location');
           try {
             const location = await this.getLocation();
-            console.log('location:', location);
-            console.log('Fetching from OpenWeatherMap API');
             try {
-              console.log('Fetching from OpenWeatherMap API');
               return await this.fetchFromOpenWeatherMap(
                 config.weather.apiKey,
                 location.lat,
@@ -220,22 +277,20 @@ export class WeatherService {
             } catch (apiError) {
               const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
               console.error('Failed to fetch from OpenWeatherMap API:', errorMessage);
+              console.error('API error details:', apiError);
               // Don't fall through silently - show the error but still provide mock data
               // Fall through to mock data
             }
           } catch (locationError) {
-            console.warn('Failed to get location, falling back to mock data:', locationError);
+            const errorMessage = locationError instanceof Error ? locationError.message : String(locationError);
+            console.error('Failed to get location, falling back to mock data:', errorMessage);
+            console.error('Location error details:', locationError);
             // Fall through to mock data
           }
         }
       } else {
-        console.log('Weather API Check Fails');
-        console.log('config.weather.provider:', config.weather.provider);
-        console.log('config.weather.apiKey:', config.weather.apiKey);
-        console.log('config.weather.enabled:', config.weather.enabled);
       }
 
-      console.log('Falling back to mock data');
       // Fallback to mock data if API is not configured or location fails
       await new Promise(resolve => setTimeout(resolve, 500));
       
