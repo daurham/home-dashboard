@@ -159,6 +159,8 @@ export class WeatherService {
     }
 
     const data: OpenWeatherMapResponse = await response.json();
+    console.log('url:', url);
+    console.log('Weather data:', data);
 
     // Determine if it's daytime based on sunrise/sunset
     let isDaytime: boolean | undefined;
