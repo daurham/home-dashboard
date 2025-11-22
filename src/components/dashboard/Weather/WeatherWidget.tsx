@@ -35,6 +35,7 @@ export function WeatherWidget() {
       try {
         const service = WeatherService.getInstance();
         const data = await service.getCurrentWeather(units);
+        console.log('data:', data);
         setWeather(data);
         setLoading(false);
       } catch (error) {

@@ -191,7 +191,7 @@ export class WeatherService {
   async getCurrentWeather(units: 'metric' | 'imperial' = 'metric'): Promise<WeatherData> {
     try {
       const config = await loadAPIConfig();
-      
+      console.log('config:', config);
       // Check if OpenWeatherMap is configured
       if (
         config.weather.provider === 'openweathermap' &&
@@ -204,6 +204,7 @@ export class WeatherService {
         } else {
           try {
             const location = await this.getLocation();
+            console.log('location:', location);
             try {
               return await this.fetchFromOpenWeatherMap(
                 config.weather.apiKey,
