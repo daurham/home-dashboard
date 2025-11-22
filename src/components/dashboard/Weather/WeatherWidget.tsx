@@ -23,7 +23,8 @@ export function WeatherWidget() {
   if (!weatherConfig.enabled) {
     return null;
   }
-  
+
+  console.log('weatherConfig:', weatherConfig);
   useEffect(() => {
     if (!weatherConfig.showCurrentWeather) {
       setLoading(false);
