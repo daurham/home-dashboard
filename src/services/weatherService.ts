@@ -223,6 +223,11 @@ export class WeatherService {
             // Fall through to mock data
           }
         }
+      } else {
+        console.log('Weather API Check Fails');
+        console.log('config.weather.provider:', config.weather.provider);
+        console.log('config.weather.apiKey:', config.weather.apiKey);
+        console.log('config.weather.enabled:', config.weather.enabled);
       }
 
       // Fallback to mock data if API is not configured or location fails
