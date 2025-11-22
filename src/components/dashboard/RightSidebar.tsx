@@ -139,7 +139,7 @@ export function RightSidebar() {
           variant="ghost"
           size="icon"
           onClick={() => setRightSidebarCollapsed(false)}
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-50 rounded-l-md rounded-r-none border border-r-0 border-sidebar-border bg-sidebar hover:bg-sidebar-accent shadow-lg"
+          className="fixed right-0 top-4 z-50 rounded-l-lg rounded-r-none border-l border-y border-sidebar-border bg-sidebar hover:bg-sidebar-accent shadow-md transition-all"
         >
           <Menu className="h-5 w-5" />
         </Button>
