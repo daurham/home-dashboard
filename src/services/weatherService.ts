@@ -198,14 +198,19 @@ export class WeatherService {
         config.weather.apiKey &&
         config.weather.enabled
       ) {
+        console.log('Weather API Check Passes');
         // Validate API key before attempting to use it
         if (!config.weather.apiKey.trim()) {
           console.warn('OpenWeatherMap API key is empty, falling back to mock data');
         } else {
+          console.log('OpenWeatherMap API key is not empty');
+          console.log('Getting location');
           try {
             const location = await this.getLocation();
             console.log('location:', location);
+            console.log('Fetching from OpenWeatherMap API');
             try {
+              console.log('Fetching from OpenWeatherMap API');
               return await this.fetchFromOpenWeatherMap(
                 config.weather.apiKey,
                 location.lat,
@@ -230,6 +235,7 @@ export class WeatherService {
         console.log('config.weather.enabled:', config.weather.enabled);
       }
 
+      console.log('Falling back to mock data');
       // Fallback to mock data if API is not configured or location fails
       await new Promise(resolve => setTimeout(resolve, 500));
       
