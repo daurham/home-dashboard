@@ -63,7 +63,7 @@ export function CalendarView() {
   };
   
   return (
-    <div className="space-y-2 md:space-y-4">
+    <div className="space-y-2 md:space-y-2 lg:space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl text-foreground">
           {formatCurrentDate()}

@@ -49,7 +49,7 @@ export function Clock() {
     }
     
     return (
-      <div className="text-7xl md:text-8xl font-bold tracking-tight text-foreground mb-2">
+      <div className="text-7xl md:text-4xl lg:text-5xl xl:text-8xl font-bold tracking-tight text-foreground mb-2">
         <span>{displayHours}</span>
         <span className="animate-pulse">:</span>
         <span>{minutes}</span>
@@ -62,10 +62,10 @@ export function Clock() {
         {milliseconds && (
           <>
             <span className="animate-pulse">.</span>
-            <span className="text-5xl md:text-6xl">{milliseconds}</span>
+            <span className="text-5xl md:text-2xl lg:text-3xl xl:text-6xl">{milliseconds}</span>
           </>
         )}
-        {period && <span className="ml-2 text-4xl md:text-5xl">{period}</span>}
+        {period && <span className="ml-2 text-4xl md:text-xl lg:text-2xl xl:text-5xl">{period}</span>}
       </div>
     );
   };

@@ -128,7 +128,7 @@ export function CalendarTab() {
   const showClockOrWeather = clockEnabled || weatherEnabled;
   
   return (
-    <div className="space-y-4 md:space-y-8">
+    <div className="space-y-4 md:space-y-4 lg:space-y-4 xl:space-y-8">
       {/* Mobile: Compact clock and weather in header */}
       {isMobile && showClockOrWeather && (
         <div className="flex items-center justify-between gap-4">
