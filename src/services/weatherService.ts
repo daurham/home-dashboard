@@ -137,6 +137,8 @@ export class WeatherService {
       }
 
       const data = await response.json();
+
+      console.log('IP geolocation data:', data);
       
       if (data.latitude && data.longitude) {
         return {

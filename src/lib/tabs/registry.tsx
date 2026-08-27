@@ -1,6 +1,6 @@
-import { Calendar, Home, Shield, Settings, Sparkles, LucideIcon, Leaf } from 'lucide-react';
+import { Calendar, Home, Shield, Settings, Sparkles, LucideIcon, Leaf, Video } from 'lucide-react';
 import { SidebarTab } from '@/lib/store';
-import { CalendarTab, PlantsTab, DevicesTab, SecurityTab, SettingsTab, AITab } from '@/components/tabs';
+import { CalendarTab, PlantsTab, DevicesTab, CamerasTab, SecurityTab, SettingsTab, AITab } from '@/components/tabs';
 
 export interface TabDefinition {
   id: SidebarTab;
@@ -41,25 +41,32 @@ export const TABS: TabDefinition[] = [
     order: 3,
   },
   {
+    id: 'cameras',
+    name: 'Cameras',
+    component: CamerasTab,
+    icon: Video,
+    order: 4,
+  },
+  {
     id: 'security',
     name: 'Security',
     component: SecurityTab,
     icon: Shield,
-    order: 4,
+    order: 5,
   },
   {
     id: 'ai',
     name: 'AI',
     component: AITab,
     icon: Sparkles,
-    order: 5,
+    order: 6,
   },
   {
     id: 'settings',
     name: 'Settings',
     component: SettingsTab,
     icon: Settings,
-    order: 6,
+    order: 7,
   },
 ];
 

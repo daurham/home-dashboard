@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type SidebarTab = 'calendar' | 'devices' | 'security' | 'settings' | 'ai' | 'plants';
+export type SidebarTab = 'calendar' | 'devices' | 'cameras' | 'security' | 'settings' | 'ai' | 'plants';
 
 interface UIState {
   activeSidebarTab: SidebarTab;

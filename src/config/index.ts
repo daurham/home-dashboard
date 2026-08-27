@@ -44,6 +44,8 @@ export {
   isKioskMode,
 } from './dashboard';
 
+export { type CameraFeedConfig, cameras } from './cameras';
+
 // API config
 export {
   type APIConfig,
