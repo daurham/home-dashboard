@@ -3,6 +3,8 @@
  * All database operations go through this service
  */
 
+import type { LatencySnapshot, LatencyTargetSnapshot } from '@/lib/latency/format';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 interface ApiResponse<T> {
@@ -26,7 +28,9 @@ async function apiRequest<T>(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+    const error = await response.json().catch(() => ({
+      error: `API ${response.status} ${response.statusText || ''}`.trim(),
+    }));
     throw new Error(error.error || error.details || `HTTP ${response.status}`);
   }
 
@@ -129,8 +133,17 @@ export interface DbExpenseSummary {
   from: string;
   to: string;
   selected_period_total_cents: number;
+  weekly_budget_cents?: number;
+  remaining_cents?: number | null;
   periods: Array<{ key: string; start: string; end: string; total_cents: number }>;
   categories: Array<{ category_id: string; name: string; color: string; total_cents: number }>;
+}
+
+export interface DbExpenseSettings {
+  id: number;
+  weekly_budget_cents: number;
+  currency: string;
+  updated_at: string;
 }
 
 export interface ExpenseWriteBody {
@@ -175,6 +188,14 @@ export const expensesApi = {
     apiRequest<DbExpenseSummary>(`/expenses/summary${toQuery(params as Record<string, string | undefined>)}`),
 };
 
+export const latencyApi = {
+  snapshot: () => apiRequest<LatencySnapshot>('/latency/snapshot'),
+  forceCheck: (id: string) =>
+    apiRequest<LatencyTargetSnapshot>(`/latency/check/${encodeURIComponent(id)}`, {
+      method: 'POST',
+    }),
+};
+
 export const expenseCategoriesApi = {
   list: (includeArchived = false) =>
     apiRequest<DbCategoryRow[]>(`/expense-categories${includeArchived ? '?includeArchived=true' : ''}`),
@@ -182,5 +203,14 @@ export const expenseCategoriesApi = {
     apiRequest<DbCategoryRow>('/expense-categories', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: CategoryWriteBody) =>
     apiRequest<DbCategoryRow>(`/expense-categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+};
+
+export const expenseSettingsApi = {
+  get: () => apiRequest<DbExpenseSettings>('/expense-settings'),
+  update: (data: { weekly_budget_cents?: number; weekly_budget?: number }) =>
+    apiRequest<DbExpenseSettings>('/expense-settings', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
 };
 

@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => {
   const cameraHost = cameraProxyTarget(env.CAMERA_HOST || "http://192.168.1.72");
   const cameraUser = env.CAMERA_USER || "admin";
   const cameraPass = env.CAMERA_PASS || "123456";
+  const apiProxyTarget = env.API_PROXY_TARGET || "http://192.168.1.161";
 
   return {
     base: "/dashboard/",
@@ -20,6 +21,11 @@ export default defineConfig(({ mode }) => {
       host: "0.0.0.0",
       port: 8080,
       proxy: {
+        // Same-origin /api from the Vite app → home-ai node-api (via nginx on :80).
+        "/api": {
+          target: apiProxyTarget,
+          changeOrigin: true,
+        },
         // Browser talks to this same-origin path; Vite adds camera credentials.
         "/camera-proxy": {
           target: cameraHost,

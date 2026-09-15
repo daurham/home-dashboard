@@ -10,7 +10,7 @@ interface DashboardState {
 }
 
 function withNewDefaultTabs(config: DashboardConfig): DashboardConfig {
-  const extras: SidebarTab[] = ['cameras', 'expenses'];
+  const extras: SidebarTab[] = ['cameras', 'expenses', 'latency'];
   const visibleTabs = [...config.visibleTabs];
   for (const tab of extras) {
     if (!visibleTabs.includes(tab)) visibleTabs.push(tab);

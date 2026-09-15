@@ -137,7 +137,10 @@ For the Expenses tab on an existing database (init.sql only runs on a fresh volu
 
 ```bash
 psql "$DATABASE_URL" -f postgres/migrate_expenses.sql
+psql "$DATABASE_URL" -f postgres/migrate_expense_budget.sql
 ```
+
+Household weekly budget defaults to `$150` in `expense_settings` and can be changed from the Expenses header or `PATCH /api/expense-settings`.
 
 ### CORS
 

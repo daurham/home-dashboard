@@ -24,3 +24,24 @@ export function centsToInput(cents: number | null): string {
   if (!cents) return '';
   return (cents / 100).toFixed(2);
 }
+
+export function remainingCents(budgetCents: number, spentCents: number): number {
+  return budgetCents - spentCents;
+}
+
+export function budgetSpentPercent(budgetCents: number, spentCents: number): number {
+  if (budgetCents <= 0) return 0;
+  return Math.min(100, (spentCents / budgetCents) * 100);
+}
+
+/** $150 when the amount is whole dollars; otherwise $150.50. */
+export function formatBudget(cents: number, currency = 'USD'): string {
+  const dollars = (cents || 0) / 100;
+  const whole = Number.isInteger(dollars);
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  }).format(dollars);
+}

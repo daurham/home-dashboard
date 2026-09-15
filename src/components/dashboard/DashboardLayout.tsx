@@ -13,7 +13,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isMobile = useIsMobile();
   const { sidebarCollapsed, setSidebarCollapsed, rightSidebarCollapsed, setRightSidebarCollapsed, activeSidebarTab } = useUIStore();
-  const hideRightSidebar = activeSidebarTab === 'expenses';
+  const hideRightSidebar = activeSidebarTab === 'expenses' || activeSidebarTab === 'latency';
 
   return (
     <div className="flex min-h-screen w-full bg-dashboard-bg flex-col md:flex-row">

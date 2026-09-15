@@ -11,6 +11,7 @@ import { getExpenseWeekRange } from '@/lib/expenses/weekRange';
 import { ExpenseFormSheet } from '@/components/expenses/ExpenseFormSheet';
 import { ExpenseCharts } from '@/components/expenses/ExpenseCharts';
 import { ExpenseList } from '@/components/expenses/ExpenseList';
+import { ExpenseBudgetHero } from '@/components/expenses/ExpenseBudgetHero';
 import { CategoryManagerSheet } from '@/components/expenses/CategoryManagerSheet';
 import type { Expense } from '@/services/expenseService';
 import { cn } from '@/lib/utils';
@@ -26,6 +27,7 @@ export function ExpensesTab() {
     categories,
     summary,
     isLoading,
+    loadError,
     load,
     setGrain,
     setChartMode,
@@ -37,6 +39,7 @@ export function ExpensesTab() {
     restoreExpense,
     addCategory,
     editCategory,
+    setWeeklyBudget,
   } = useExpenseStore();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -76,6 +79,11 @@ export function ExpensesTab() {
 
   return (
     <div className="relative space-y-5 pb-20 md:pb-4">
+      {loadError && (
+        <div className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-foreground">
+          Couldn’t reach the expenses API ({loadError}). Check that home-ai is up and the dashboard is proxying <code className="text-xs">/api</code> to it.
+        </div>
+      )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
           <div className="flex items-center gap-1">
@@ -93,14 +101,13 @@ export function ExpensesTab() {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex items-baseline gap-3 px-1">
-            <p className="text-3xl font-semibold tabular-nums tracking-tight">{formatCents(totalCents)}</p>
-            {delta != null && delta !== 0 && (
-              <p className="text-sm text-muted-foreground">
-                {delta > 0 ? '↑' : '↓'} {formatCents(Math.abs(delta))} vs prior
-              </p>
-            )}
-          </div>
+          <ExpenseBudgetHero
+            grain={grain}
+            spentCents={totalCents}
+            weeklyBudgetCents={summary?.weeklyBudgetCents}
+            vsPriorCents={delta}
+            onSaveBudget={setWeeklyBudget}
+          />
         </div>
 
         <div className="flex items-center gap-2">
@@ -207,7 +214,13 @@ export function ExpensesTab() {
             });
           } else {
             const created = await addExpense(values);
-            toast.success(`Saved ${formatCents(created.amountCents)}`, {
+            const leftover = useExpenseStore.getState().summary?.remainingCents;
+            const leftoverLabel = leftover == null
+              ? `Saved ${formatCents(created.amountCents)}`
+              : leftover < 0
+                ? `Saved ${formatCents(created.amountCents)} · ${formatCents(Math.abs(leftover))} over`
+                : `Saved ${formatCents(created.amountCents)} · ${formatCents(leftover)} left`;
+            toast.success(leftoverLabel, {
               action: {
                 label: 'Undo',
                 onClick: () => {

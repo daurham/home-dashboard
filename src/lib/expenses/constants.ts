@@ -2,6 +2,8 @@ import { DEFAULT_EXPENSE_TIMEZONE } from './weekRange';
 
 export { DEFAULT_EXPENSE_TIMEZONE };
 
+export const DEFAULT_WEEKLY_BUDGET_CENTS = 15000;
+
 export const PAID_BY_OPTIONS = [
   { value: 'Jake', label: 'Jake' },
   { value: 'Wife', label: 'Wife' },

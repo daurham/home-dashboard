@@ -18,6 +18,7 @@ interface ExpenseState {
   categories: ExpenseCategory[];
   summary: ExpenseSummary | null;
   isLoading: boolean;
+  loadError: string | null;
   load: (timeZone?: string) => Promise<void>;
   setGrain: (grain: ExpenseGrain) => void;
   setChartMode: (mode: ChartMode) => void;
@@ -41,6 +42,7 @@ interface ExpenseState {
   restoreExpense: (id: string) => Promise<void>;
   addCategory: (name: string, color: string) => Promise<ExpenseCategory>;
   editCategory: (id: string, updates: { name?: string; color?: string; archived?: boolean }) => Promise<void>;
+  setWeeklyBudget: (weeklyBudgetCents: number) => Promise<void>;
 }
 
 function currentKeys(timeZone: string) {
@@ -75,6 +77,7 @@ export const useExpenseStore = create<ExpenseState>()((set, get) => ({
   categories: [],
   summary: null,
   isLoading: false,
+  loadError: null,
 
   load: async (timeZone) => {
     const state = get();
@@ -83,7 +86,7 @@ export const useExpenseStore = create<ExpenseState>()((set, get) => ({
     const weekKey = timeZone && timeZone !== state.timeZone ? keys.weekKey : state.selectedWeekKey;
     const monthKey = timeZone && timeZone !== state.timeZone ? keys.monthKey : state.selectedMonthKey;
 
-    set({ isLoading: true, timeZone: tz, selectedWeekKey: weekKey, selectedMonthKey: monthKey });
+    set({ isLoading: true, loadError: null, timeZone: tz, selectedWeekKey: weekKey, selectedMonthKey: monthKey });
 
     try {
       const grain = get().grain;
@@ -106,7 +109,8 @@ export const useExpenseStore = create<ExpenseState>()((set, get) => ({
       set({ expenses, categories, summary, isLoading: false });
     } catch (error) {
       console.error('Error loading expenses:', error);
-      set({ isLoading: false });
+      const message = error instanceof Error ? error.message : 'Could not load expenses';
+      set({ isLoading: false, loadError: message });
       throw error;
     }
   },
@@ -183,6 +187,11 @@ export const useExpenseStore = create<ExpenseState>()((set, get) => ({
     set((state) => ({
       categories: state.categories.map((category) => (category.id === id ? updated : category)),
     }));
+    await get().load();
+  },
+
+  setWeeklyBudget: async (weeklyBudgetCents) => {
+    await expenseService.updateWeeklyBudget(weeklyBudgetCents);
     await get().load();
   },
 }));

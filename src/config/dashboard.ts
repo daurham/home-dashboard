@@ -63,7 +63,7 @@ export interface DashboardConfig {
 
 export const defaultDashboardConfig: DashboardConfig = {
   defaultTab: 'calendar',
-  visibleTabs: ['calendar', 'expenses', 'plants', 'devices', 'cameras', 'security', 'settings', 'ai'],
+  visibleTabs: ['calendar', 'expenses', 'latency', 'plants', 'devices', 'cameras', 'security', 'settings', 'ai'],
   sidebarCollapsedByDefault: false,
   clock: {
     enabled: true,

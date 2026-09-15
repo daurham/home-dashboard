@@ -1,5 +1,6 @@
 import {
   expenseCategoriesApi,
+  expenseSettingsApi,
   expensesApi,
   type DbCategoryRow,
   type DbExpenseRow,
@@ -8,6 +9,8 @@ import {
   type ExpenseSummaryQuery,
   type ExpenseWriteBody,
 } from './apiService';
+import { DEFAULT_WEEKLY_BUDGET_CENTS } from '@/lib/expenses/constants';
+import { remainingCents } from '@/lib/expenses/money';
 
 export interface ExpenseCategory {
   id: string;
@@ -51,6 +54,8 @@ export interface ExpenseSummary {
   from: string;
   to: string;
   selectedPeriodTotalCents: number;
+  weeklyBudgetCents: number;
+  remainingCents: number | null;
   periods: ExpenseSummaryPeriod[];
   categories: ExpenseSummaryCategory[];
 }
@@ -82,12 +87,19 @@ function mapExpense(row: DbExpenseRow): Expense {
 }
 
 function mapSummary(row: DbExpenseSummary): ExpenseSummary {
+  const weeklyBudgetCents = row.weekly_budget_cents ?? DEFAULT_WEEKLY_BUDGET_CENTS;
+  const remaining = row.grain === 'week'
+    ? (row.remaining_cents ?? remainingCents(weeklyBudgetCents, row.selected_period_total_cents))
+    : (row.remaining_cents ?? null);
+
   return {
     grain: row.grain,
     timeZone: row.timeZone,
     from: row.from,
     to: row.to,
     selectedPeriodTotalCents: row.selected_period_total_cents,
+    weeklyBudgetCents,
+    remainingCents: remaining,
     periods: row.periods.map((period) => ({
       key: period.key,
       start: period.start,
@@ -142,4 +154,9 @@ export async function updateExpenseCategory(
   data: { name?: string; color?: string; archived?: boolean; archived_at?: null },
 ): Promise<ExpenseCategory> {
   return mapCategory(await expenseCategoriesApi.update(id, data));
+}
+
+export async function updateWeeklyBudget(weeklyBudgetCents: number): Promise<number> {
+  const settings = await expenseSettingsApi.update({ weekly_budget_cents: weeklyBudgetCents });
+  return settings.weekly_budget_cents;
 }
