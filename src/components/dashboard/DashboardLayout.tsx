@@ -12,7 +12,8 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isMobile = useIsMobile();
-  const { sidebarCollapsed, setSidebarCollapsed, rightSidebarCollapsed, setRightSidebarCollapsed } = useUIStore();
+  const { sidebarCollapsed, setSidebarCollapsed, rightSidebarCollapsed, setRightSidebarCollapsed, activeSidebarTab } = useUIStore();
+  const hideRightSidebar = activeSidebarTab === 'expenses';
 
   return (
     <div className="flex min-h-screen w-full bg-dashboard-bg flex-col md:flex-row">
@@ -34,6 +35,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               size="icon"
               onClick={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
               className="text-sidebar-foreground hover:bg-sidebar-accent"
+              disabled={hideRightSidebar}
             >
               <Menu className="h-5 w-5" />
             </Button>
@@ -50,8 +52,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </main>
       
-      {/* Right Sidebar - Always render, but hidden on mobile (shown via Sheet) */}
-      <RightSidebar />
+      {/* Right Sidebar - hidden while Expenses uses the main pane */}
+      {!hideRightSidebar && <RightSidebar />}
       
       <EventModal />
     </div>

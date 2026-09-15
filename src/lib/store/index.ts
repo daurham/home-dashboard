@@ -10,6 +10,7 @@ export { usePreferencesStore } from './preferencesStore';
 export { useModuleStore } from './moduleStore';
 export { useBudgetStore } from './budgetStore';
 export { useListStore } from './listStore';
+export { useExpenseStore } from './expenseStore';
 
 // Export all types
 export type { CalendarEvent, RecurrenceType } from '@/services/calendarService';
@@ -19,4 +20,5 @@ export type { TimeFormat, Units } from './preferencesStore';
 export type { ModuleType } from './moduleStore';
 export type { Purchase } from './budgetStore';
 export type { ListItem } from './listStore';
+export type { Expense, ExpenseCategory } from './expenseStore';
 

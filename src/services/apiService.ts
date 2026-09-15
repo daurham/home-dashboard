@@ -81,3 +81,106 @@ export const calendarApi = {
   delete: (id: string) => apiRequest<any>(`/calendar/${id}`, { method: 'DELETE' }),
 };
 
+export interface ExpenseListQuery {
+  from?: string;
+  to?: string;
+  weekKey?: string;
+  month?: string;
+  timeZone?: string;
+}
+
+export interface ExpenseSummaryQuery {
+  grain?: 'week' | 'month';
+  from?: string;
+  to?: string;
+  weekKey?: string;
+  month?: string;
+  timeZone?: string;
+}
+
+export interface DbExpenseRow {
+  id: string;
+  amount_cents: number;
+  currency: string;
+  category_id: string;
+  note: string | null;
+  paid_by: string | null;
+  occurred_on: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  category_name: string;
+  category_color: string;
+}
+
+export interface DbCategoryRow {
+  id: string;
+  name: string;
+  color: string;
+  sort_order: number;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbExpenseSummary {
+  grain: 'week' | 'month';
+  timeZone: string;
+  from: string;
+  to: string;
+  selected_period_total_cents: number;
+  periods: Array<{ key: string; start: string; end: string; total_cents: number }>;
+  categories: Array<{ category_id: string; name: string; color: string; total_cents: number }>;
+}
+
+export interface ExpenseWriteBody {
+  amount_cents?: number;
+  currency?: string;
+  category_id?: string;
+  note?: string | null;
+  paid_by?: string | null;
+  occurred_on?: string;
+  timeZone?: string;
+}
+
+export interface CategoryWriteBody {
+  name?: string;
+  color?: string;
+  sort_order?: number;
+  archived?: boolean;
+  archived_at?: null;
+}
+
+function toQuery(params: Record<string, string | undefined>): string {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) search.set(key, value);
+  });
+  const encoded = search.toString();
+  return encoded ? `?${encoded}` : '';
+}
+
+export const expensesApi = {
+  list: (params: ExpenseListQuery = {}) =>
+    apiRequest<DbExpenseRow[]>(`/expenses${toQuery(params as Record<string, string | undefined>)}`),
+  getById: (id: string) => apiRequest<DbExpenseRow>(`/expenses/${id}`),
+  create: (data: ExpenseWriteBody) =>
+    apiRequest<DbExpenseRow>('/expenses', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: ExpenseWriteBody) =>
+    apiRequest<DbExpenseRow>(`/expenses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) => apiRequest<{ message: string; id: string }>(`/expenses/${id}`, { method: 'DELETE' }),
+  restore: (id: string) =>
+    apiRequest<DbExpenseRow>(`/expenses/${id}/restore`, { method: 'POST' }),
+  summary: (params: ExpenseSummaryQuery = {}) =>
+    apiRequest<DbExpenseSummary>(`/expenses/summary${toQuery(params as Record<string, string | undefined>)}`),
+};
+
+export const expenseCategoriesApi = {
+  list: (includeArchived = false) =>
+    apiRequest<DbCategoryRow[]>(`/expense-categories${includeArchived ? '?includeArchived=true' : ''}`),
+  create: (data: CategoryWriteBody) =>
+    apiRequest<DbCategoryRow>('/expense-categories', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: CategoryWriteBody) =>
+    apiRequest<DbCategoryRow>(`/expense-categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+};
+

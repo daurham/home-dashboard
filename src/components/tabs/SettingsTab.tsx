@@ -15,9 +15,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronRight, Calendar } from 'lucide-react';
+import { ChevronDown, ChevronRight, Calendar, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { HOUSEHOLD_TIMEZONES } from '@/lib/expenses/constants';
 
 const accentColors: Array<{ value: AccentColor; label: string }> = [
   { value: 'teal', label: 'Teal' },
@@ -30,7 +31,7 @@ const accentColors: Array<{ value: AccentColor; label: string }> = [
 export function SettingsTab() {
   const { themeMode, accentColor, setThemeMode, setAccentColor } = useThemeStore();
   const { config, updateCalendarConfig } = useDashboardStore();
-  const { timeFormat, units, setTimeFormat, setUnits } = usePreferencesStore();
+  const { timeFormat, units, expenseTimeZone, setTimeFormat, setUnits, setExpenseTimeZone } = usePreferencesStore();
   const [calendarOpen, setCalendarOpen] = useState(false);
   
   return (
@@ -120,6 +121,34 @@ export function SettingsTab() {
                   Applies to weather and other measurements
                 </p>
               </div>
+            </div>
+          </div>
+
+          <div className="border-t pt-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Wallet className="h-5 w-5" />
+              <h3 className="text-lg font-semibold text-foreground">Expenses</h3>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="expense-timezone">Household timezone</Label>
+              <Select
+                value={expenseTimeZone}
+                onValueChange={(value) => setExpenseTimeZone(value)}
+              >
+                <SelectTrigger id="expense-timezone">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {HOUSEHOLD_TIMEZONES.map((zone) => (
+                    <SelectItem key={zone.value} value={zone.value}>
+                      {zone.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Expense weeks run Friday 12:00 AM through Thursday 11:59:59 PM in this timezone (default America/Los_Angeles).
+              </p>
             </div>
           </div>
           
