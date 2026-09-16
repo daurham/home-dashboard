@@ -6,14 +6,16 @@ import { getFourWeeks, getWeekStart, formatDate, shiftWeek, formatMonthYear, isF
 import { useCalendarStore, useDashboardStore } from '@/lib/store';
 import { mergeChoresIntoEvents, useChoreStore } from '@/lib/store/choreStore';
 import { CalendarWeek } from './CalendarWeek';
+import { CalendarFetchSkeleton } from '@/components/ui/fetch-skeleton';
 
 const weekDaysMonday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const weekDaysSunday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const { events, setSelectedDate, loadEvents } = useCalendarStore();
+  const { events, setSelectedDate, loadEvents, hasLoaded } = useCalendarStore();
   const chores = useChoreStore((s) => s.chores);
+  const choresLoaded = useChoreStore((s) => s.hasLoaded);
   const { config } = useDashboardStore();
   const firstDayOfWeek = config.calendar.firstDayOfWeek;
   
@@ -115,7 +117,12 @@ export function CalendarView() {
         </div>
         
         {/* Calendar weeks */}
-        {weeks.map((week, weekIndex) => {
+        {!hasLoaded || !choresLoaded ? (
+          <div className="p-3">
+            <CalendarFetchSkeleton weeks={4} />
+          </div>
+        ) : (
+          weeks.map((week, weekIndex) => {
           const monthLabel = weeksWithMonths[weekIndex];
           return (
             <div key={weekIndex}>
@@ -134,7 +141,8 @@ export function CalendarView() {
               />
             </div>
           );
-        })}
+        })
+        )}
       </Card>
     </div>
   );

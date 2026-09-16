@@ -10,6 +10,7 @@ interface CalendarState {
   selectedDate: string | null;
   selectedEvent: CalendarEvent | null;
   isLoading: boolean;
+  hasLoaded: boolean;
   lastDateRange: { start: Date; end: Date } | null;
   addEvent: (event: Omit<CalendarEvent, 'id'>) => Promise<void>;
   updateEvent: (id: string, event: Partial<CalendarEvent>) => Promise<void>;
@@ -33,6 +34,7 @@ export const useCalendarStore = create<CalendarState>()((set, get) => ({
   selectedDate: null,
   selectedEvent: null,
   isLoading: false,
+  hasLoaded: false,
   lastDateRange: null,
   
   loadEvents: async (startDate?: Date, endDate?: Date) => {
@@ -47,10 +49,10 @@ export const useCalendarStore = create<CalendarState>()((set, get) => ({
         : getDefaultDateRange();
       
       const events = await calendarService.getEventsForRange(start, end);
-      set({ events, isLoading: false, lastDateRange: { start, end } });
+      set({ events, isLoading: false, hasLoaded: true, lastDateRange: { start, end } });
     } catch (error) {
       console.error('Error loading calendar events:', error);
-      set({ events: [], isLoading: false });
+      set({ events: [], isLoading: false, hasLoaded: true });
     }
   },
   

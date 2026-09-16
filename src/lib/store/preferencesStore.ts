@@ -27,7 +27,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       units: 'imperial',
       expenseTimeZone: DEFAULT_EXPENSE_TIMEZONE,
       greetingName: 'Jake',
-      householdLabel: 'Jake & household',
+      householdLabel: 'Daurham Household',
       householdMembers: ['Jake', 'Wife'],
       setTimeFormat: (format) => set({ timeFormat: format }),
       setUnits: (units) => set({ units }),
@@ -43,7 +43,10 @@ export const usePreferencesStore = create<PreferencesState>()(
         return {
           ...currentState,
           ...persisted,
-          expenseTimeZone: persisted?.expenseTimeZone || DEFAULT_EXPENSE_TIMEZONE,
+          expenseTimeZone:
+            !persisted?.expenseTimeZone || persisted.expenseTimeZone === 'America/Los_Angeles'
+              ? DEFAULT_EXPENSE_TIMEZONE
+              : persisted.expenseTimeZone,
           greetingName: persisted?.greetingName || 'Jake',
           householdLabel: persisted?.householdLabel || 'Jake & household',
           householdMembers: persisted?.householdMembers?.length

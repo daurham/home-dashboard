@@ -3,6 +3,7 @@ import { HubCard } from '@/components/home/HubCard';
 import { formatCents, budgetSpentPercent, formatBudget } from '@/lib/expenses/money';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface StatCardsProps {
   monthSpendCents: number;
@@ -16,6 +17,7 @@ interface StatCardsProps {
   camerasOnline: number;
   camerasTotal: number;
   compact?: boolean;
+  loading?: boolean;
 }
 
 export function StatCards({
@@ -30,9 +32,26 @@ export function StatCards({
   camerasOnline,
   camerasTotal,
   compact = false,
+  loading = false,
 }: StatCardsProps) {
   const setActiveSidebarTab = useUIStore((s) => s.setActiveSidebarTab);
   const spentPct = budgetSpentPercent(weeklyBudgetCents, weeklySpentCents);
+
+  if (loading) {
+    return (
+      <HubCard className={compact ? 'p-1.5' : 'p-3'}>
+        <div
+          className={cn('grid h-full gap-1', compact ? 'grid-cols-2 xl:grid-cols-4' : 'grid-cols-2 xl:grid-cols-4 gap-2')}
+          role="status"
+          aria-label="Loading overview"
+        >
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className={cn('h-full min-h-[3.25rem] rounded-lg', !compact && 'min-h-[5.5rem]')} />
+          ))}
+        </div>
+      </HubCard>
+    );
+  }
 
   if (compact) {
     const cameraNote = camerasTotal === 0

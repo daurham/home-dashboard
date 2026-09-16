@@ -6,6 +6,7 @@ import { DEFAULT_WEEKLY_BUDGET_CENTS } from '@/lib/expenses/constants';
 import { budgetSpentPercent, formatBudget, formatCents, parseAmountToCents } from '@/lib/expenses/money';
 import type { ExpenseGrain } from '@/lib/store/expenseStore';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ExpenseBudgetHeroProps {
   grain: ExpenseGrain;
@@ -13,6 +14,7 @@ interface ExpenseBudgetHeroProps {
   weeklyBudgetCents?: number;
   vsPriorCents: number | null;
   onSaveBudget: (cents: number) => Promise<void>;
+  loading?: boolean;
 }
 
 export function ExpenseBudgetHero({
@@ -21,6 +23,7 @@ export function ExpenseBudgetHero({
   weeklyBudgetCents = DEFAULT_WEEKLY_BUDGET_CENTS,
   vsPriorCents,
   onSaveBudget,
+  loading = false,
 }: ExpenseBudgetHeroProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -65,6 +68,14 @@ export function ExpenseBudgetHero({
 
   return (
     <div className="min-w-0 space-y-3 px-1">
+      {loading ? (
+        <div className="space-y-3" role="status" aria-label="Loading budget">
+          <Skeleton className="h-9 w-40 rounded-md" />
+          <Skeleton className="h-4 w-56 rounded-md" />
+          <Skeleton className="h-2 w-full max-w-md rounded-full" />
+        </div>
+      ) : (
+      <>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <p className="text-3xl font-semibold tabular-nums tracking-tight">
           {formatCents(heroCents)}
@@ -152,6 +163,8 @@ export function ExpenseBudgetHero({
               : `${Math.round(spentPct)}% of the ${formatBudget(weeklyBudgetCents)} weekly budget`}
           </p>
         </div>
+      )}
+      </>
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { assistantDevPlugin } from "./vite.assistant-dev";
 
 function cameraProxyTarget(host: string): string {
   return host.startsWith("http://") || host.startsWith("https://") ? host : `http://${host}`;
@@ -25,6 +26,7 @@ export default defineConfig(({ mode }) => {
         "/api": {
           target: apiProxyTarget,
           changeOrigin: true,
+          timeout: 180_000,
         },
         // Browser talks to this same-origin path; Vite adds camera credentials.
         "/camera-proxy": {
@@ -41,7 +43,7 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+    plugins: [assistantDevPlugin({ ollamaUrl: env.OLLAMA_URL }), react(), mode === "development" && componentTagger()].filter(Boolean),
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

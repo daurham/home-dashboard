@@ -11,11 +11,12 @@ import { getExpenseWeekRange, todayYmd } from '@/lib/expenses/weekRange';
 import { formatDate } from '@/lib/calendar';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { FetchSkeleton } from '@/components/ui/fetch-skeleton';
 
 export function ExpenseLoggerCard({ compact = false }: { compact?: boolean }) {
   const setActiveSidebarTab = useUIStore((s) => s.setActiveSidebarTab);
   const expenseTimeZone = usePreferencesStore((s) => s.expenseTimeZone);
-  const { expenses, categories, addExpense, load, summary } = useExpenseStore();
+  const { expenses, categories, addExpense, load, summary, hasLoaded } = useExpenseStore();
   const [formOpen, setFormOpen] = useState(false);
 
   const weekRange = useMemo(
@@ -100,6 +101,9 @@ export function ExpenseLoggerCard({ compact = false }: { compact?: boolean }) {
         </div>
       </div>
 
+      {!hasLoaded ? (
+        <FetchSkeleton lines={compact ? 3 : 4} lineClassName={compact ? 'h-10 rounded-lg' : 'h-14 rounded-xl'} />
+      ) : (
       <div className={cn('grid min-h-0 flex-1 gap-2', compact ? 'grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]' : 'grid-cols-[minmax(0,1fr)_minmax(7.5rem,0.9fr)]')}>
         <BudgetDonut
           slices={categoryTotals}
@@ -136,6 +140,7 @@ export function ExpenseLoggerCard({ compact = false }: { compact?: boolean }) {
           </ul>
         </div>
       </div>
+      )}
       {form}
     </HubCard>
   );

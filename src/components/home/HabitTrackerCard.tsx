@@ -4,11 +4,13 @@ import { getHabitWeekDays, habitProgress, useHabitStore } from '@/lib/store/habi
 import { formatDate, isToday } from '@/lib/calendar';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { HabitFetchSkeleton } from '@/components/ui/fetch-skeleton';
 
 const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export function HabitTrackerCard({ compact = false }: { compact?: boolean }) {
   const habits = useHabitStore((s) => s.habits);
+  const hasLoaded = useHabitStore((s) => s.hasLoaded);
   const toggleDay = useHabitStore((s) => s.toggleDay);
   const setActiveSidebarTab = useUIStore((s) => s.setActiveSidebarTab);
   const weekDays = getHabitWeekDays(new Date(), 0);
@@ -31,10 +33,13 @@ export function HabitTrackerCard({ compact = false }: { compact?: boolean }) {
         </button>
       </div>
 
+      {!hasLoaded ? (
+        <HabitFetchSkeleton rows={compact ? 3 : 4} compact={compact} />
+      ) : (
       <div
         className="grid min-h-0 flex-1 overflow-hidden"
         style={{
-          gridTemplateColumns: `minmax(0,1.35fr) repeat(7,minmax(0,1fr)) auto`,
+          gridTemplateColumns: `38% repeat(7,minmax(0,1fr)) auto`,
           gridTemplateRows: `auto repeat(${Math.max(visible.length, 1)}, minmax(0,1fr))`,
         }}
       >
@@ -63,8 +68,11 @@ export function HabitTrackerCard({ compact = false }: { compact?: boolean }) {
           const progress = habitProgress(habit, weekDays);
           return (
             <div key={habit.id} className="contents">
-              <div className="flex min-w-0 items-center pr-2">
-                <span className={cn('truncate font-medium leading-tight', compact ? 'text-[10px]' : 'text-xs')}>
+              <div className="flex min-w-0 items-center pr-3">
+                <span
+                  className={cn('truncate font-medium leading-tight', compact ? 'text-[10px]' : 'text-xs')}
+                  title={habit.name}
+                >
                   {habit.name}
                 </span>
               </div>
@@ -97,6 +105,7 @@ export function HabitTrackerCard({ compact = false }: { compact?: boolean }) {
           );
         })}
       </div>
+      )}
     </HubCard>
   );
 }

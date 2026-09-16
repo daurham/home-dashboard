@@ -21,6 +21,7 @@ import { getEventsForDate } from '@/lib/calendar/recurrence';
 import { formatTimeString } from '@/lib/utils/timeFormat';
 import { cn } from '@/lib/utils';
 import type { CalendarEvent } from '@/services/calendarService';
+import { CalendarFetchSkeleton, FetchSkeleton } from '@/components/ui/fetch-skeleton';
 
 function monthGrid(date: Date, firstDayOfWeek: 0 | 1): Date[][] {
   const start = getWeekStart(getMonthStart(date), firstDayOfWeek);
@@ -74,14 +75,16 @@ export function MonthCalendarCard({ compact = false, wide = false }: { compact?:
   const [focusDate, setFocusDate] = useState(() => formatDate(new Date()));
   const [pendingCellFocus, setPendingCellFocus] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const { events, loadEvents, setSelectedDate, setSelectedEvent } = useCalendarStore();
+  const { events, loadEvents, setSelectedDate, setSelectedEvent, hasLoaded } = useCalendarStore();
   const chores = useChoreStore((s) => s.chores);
+  const choresLoaded = useChoreStore((s) => s.hasLoaded);
   const firstDayOfWeek = useDashboardStore((s) => s.config.calendar.firstDayOfWeek);
   const timeFormat = usePreferencesStore((s) => s.timeFormat);
   const setActiveSidebarTab = useUIStore((s) => s.setActiveSidebarTab);
   const weekDays = firstDayOfWeek === 0
     ? ['S', 'M', 'T', 'W', 'T', 'F', 'S']
     : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const pending = !hasLoaded || !choresLoaded;
 
   const weeks = useMemo(() => monthGrid(currentDate, firstDayOfWeek), [currentDate, firstDayOfWeek]);
   const currentWeek = useMemo(
@@ -272,6 +275,9 @@ export function MonthCalendarCard({ compact = false, wide = false }: { compact?:
           </div>
         </div>
 
+        {pending ? (
+          <FetchSkeleton lines={1} lineClassName="h-full min-h-[4.5rem] rounded-lg" className="min-h-0 flex-1" />
+        ) : (
         <div className="grid min-h-0 flex-1 grid-cols-7 gap-1">
           {currentWeek.map((day, index) => {
             const dayEvents = getEventsForDate(formatDate(day), visibleEvents);
@@ -302,8 +308,9 @@ export function MonthCalendarCard({ compact = false, wide = false }: { compact?:
             );
           })}
         </div>
+        )}
 
-        {agenda.length > 0 && (
+        {!pending && agenda.length > 0 && (
           <ul className="mt-1.5 shrink-0 space-y-1">
             {agenda.map(({ day, event }) => (
               <li key={`${event.id}-${formatDate(day)}`}>
@@ -348,12 +355,12 @@ export function MonthCalendarCard({ compact = false, wide = false }: { compact?:
 
       <div className={cn('grid min-h-0 flex-1 gap-3', wide && 'md:grid-cols-[minmax(0,1.55fr)_minmax(13.5rem,0.7fr)]')}>
         <div className="flex min-h-0 min-w-0 flex-col">
-          {monthPane}
+          {pending ? <CalendarFetchSkeleton weeks={wide ? 6 : 5} className="min-h-0 flex-1" /> : monthPane}
           {!wide && (
             <div className="mt-2 shrink-0 border-t border-border/70 pt-2">
               <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Upcoming</p>
               <ul className="space-y-1">
-                {agenda.length === 0 && (
+                {!pending && agenda.length === 0 && (
                   <li className="text-[11px] text-muted-foreground">No upcoming items.</li>
                 )}
                 {agenda.map(({ day, event }) => (
@@ -405,7 +412,7 @@ export function MonthCalendarCard({ compact = false, wide = false }: { compact?:
             <div className="mt-2 shrink-0 border-t border-border/70 pt-2">
               <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Upcoming</p>
               <ul className="space-y-1">
-                {agenda.length === 0 && (
+                {!pending && agenda.length === 0 && (
                   <li className="text-[11px] text-muted-foreground">No upcoming items.</li>
                 )}
                 {agenda.map(({ day, event }) => (

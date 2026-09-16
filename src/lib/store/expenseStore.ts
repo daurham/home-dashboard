@@ -18,6 +18,7 @@ interface ExpenseState {
   categories: ExpenseCategory[];
   summary: ExpenseSummary | null;
   isLoading: boolean;
+  hasLoaded: boolean;
   loadError: string | null;
   load: (timeZone?: string) => Promise<void>;
   setGrain: (grain: ExpenseGrain) => void;
@@ -77,6 +78,7 @@ export const useExpenseStore = create<ExpenseState>()((set, get) => ({
   categories: [],
   summary: null,
   isLoading: false,
+  hasLoaded: false,
   loadError: null,
 
   load: async (timeZone) => {
@@ -106,11 +108,11 @@ export const useExpenseStore = create<ExpenseState>()((set, get) => ({
         expenseService.getExpenseSummary(summaryParams),
       ]);
 
-      set({ expenses, categories, summary, isLoading: false });
+      set({ expenses, categories, summary, isLoading: false, hasLoaded: true });
     } catch (error) {
       console.error('Error loading expenses:', error);
       const message = error instanceof Error ? error.message : 'Could not load expenses';
-      set({ isLoading: false, loadError: message });
+      set({ isLoading: false, hasLoaded: true, loadError: message });
       throw error;
     }
   },

@@ -1,8 +1,7 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { generateUUID } from '@/lib/utils/uuid';
 import { formatDate, parseDate, shiftDate } from '@/lib/calendar';
 import type { CalendarEvent } from '@/services/calendarService';
+import * as choreService from '@/services/choreService';
 
 export type ChoreIntervalUnit = 'days' | 'weeks' | 'months';
 export type ChoreIconId = 'bins' | 'vacuum' | 'bath' | 'plants' | 'laundry' | 'kitchen' | 'pets' | 'generic';
@@ -51,10 +50,13 @@ export interface ChoreDraft {
 
 interface ChoreState {
   chores: Chore[];
-  addChore: (draft: ChoreDraft) => Chore;
-  updateChore: (id: string, draft: Partial<ChoreDraft>) => void;
-  removeChore: (id: string) => void;
-  toggleComplete: (id: string, onDate?: Date) => void;
+  isLoading: boolean;
+  hasLoaded: boolean;
+  load: () => Promise<void>;
+  addChore: (draft: ChoreDraft) => Promise<Chore>;
+  updateChore: (id: string, draft: Partial<ChoreDraft>) => Promise<void>;
+  removeChore: (id: string) => Promise<void>;
+  toggleComplete: (id: string, onDate?: Date) => Promise<void>;
 }
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -196,73 +198,6 @@ export function normalizeChore(raw: unknown): Chore | null {
     icon: isIcon(row.icon) ? row.icon : 'generic',
   };
 }
-
-const defaultChores = (): Chore[] => {
-  const now = new Date().toISOString();
-  const today = formatDate(new Date());
-  const yesterday = formatDate(shiftDate(new Date(), -1));
-  const weekday = new Date().getDay();
-  const monthDay = Math.min(28, new Date().getDate());
-
-  return [
-    {
-      id: generateUUID(),
-      title: 'Take bins out',
-      assignee: 'Jake',
-      every: 1,
-      unit: 'weeks',
-      weekday,
-      monthDay,
-      icon: 'bins',
-      daySpecific: true,
-      lastCompletedOn: null,
-      completedOccurrences: {},
-      createdAt: now,
-    },
-    {
-      id: generateUUID(),
-      title: 'Vacuum upstairs',
-      assignee: 'Wife',
-      every: 14,
-      unit: 'days',
-      weekday,
-      monthDay,
-      icon: 'vacuum',
-      daySpecific: false,
-      lastCompletedOn: null,
-      completedOccurrences: {},
-      createdAt: now,
-    },
-    {
-      id: generateUUID(),
-      title: 'Clean bathrooms',
-      assignee: 'Jake',
-      every: 1,
-      unit: 'months',
-      weekday,
-      monthDay,
-      icon: 'bath',
-      daySpecific: true,
-      lastCompletedOn: today,
-      completedOccurrences: { [today]: today },
-      createdAt: now,
-    },
-    {
-      id: generateUUID(),
-      title: 'Water plants',
-      assignee: 'Wife',
-      every: 3,
-      unit: 'days',
-      weekday,
-      monthDay,
-      icon: 'plants',
-      daySpecific: false,
-      lastCompletedOn: yesterday,
-      completedOccurrences: {},
-      createdAt: now,
-    },
-  ];
-};
 
 function createdOn(chore: Chore): Date {
   const parsed = new Date(chore.createdAt);
@@ -517,102 +452,106 @@ export function mergeChoresIntoEvents(
   return [...events, ...choreEvents];
 }
 
-export const useChoreStore = create<ChoreState>()(
-  persist(
-    (set, get) => ({
-      chores: defaultChores(),
-      addChore: (draft) => {
-        const chore: Chore = {
-          id: generateUUID(),
-          lastCompletedOn: null,
-          completedOccurrences: {},
-          createdAt: new Date().toISOString(),
-          title: draft.title,
-          assignee: draft.assignee,
-          every: clampEvery(draft.every),
-          unit: draft.unit,
-          weekday: clampWeekday(draft.weekday),
-          monthDay: clampMonthDay(draft.monthDay),
-          icon: draft.icon,
-          daySpecific: draft.daySpecific,
-        };
-        set({ chores: [...get().chores, chore] });
-        return chore;
-      },
-      updateChore: (id, draft) => {
-        set({
-          chores: get().chores.map((chore) => {
-            if (chore.id !== id) return chore;
-            const next = {
-              ...chore,
-              ...draft,
-              every: draft.every != null ? clampEvery(draft.every) : chore.every,
-              weekday: draft.weekday != null ? clampWeekday(draft.weekday) : chore.weekday,
-              monthDay: draft.monthDay != null ? clampMonthDay(draft.monthDay) : chore.monthDay,
-            };
-            // Cleared slots belong to the old schedule, so drop them when it changes.
-            const rescheduled =
-              next.daySpecific !== chore.daySpecific ||
-              next.unit !== chore.unit ||
-              next.every !== chore.every ||
-              next.weekday !== chore.weekday ||
-              next.monthDay !== chore.monthDay;
-            return rescheduled ? { ...next, completedOccurrences: {} } : next;
-          }),
-        });
-      },
-      removeChore: (id) => {
-        set({ chores: get().chores.filter((chore) => chore.id !== id) });
-      },
-      toggleComplete: (id, onDate = new Date()) => {
-        const day = formatDate(onDate);
-        set({
-          chores: get().chores.map((chore) => {
-            if (chore.id !== id) return chore;
+function applyChoreDraft(chore: Chore, draft: Partial<ChoreDraft>): Chore {
+  const next = {
+    ...chore,
+    ...draft,
+    every: draft.every != null ? clampEvery(draft.every) : chore.every,
+    weekday: draft.weekday != null ? clampWeekday(draft.weekday) : chore.weekday,
+    monthDay: draft.monthDay != null ? clampMonthDay(draft.monthDay) : chore.monthDay,
+  };
+  const rescheduled =
+    next.daySpecific !== chore.daySpecific ||
+    next.unit !== chore.unit ||
+    next.every !== chore.every ||
+    next.weekday !== chore.weekday ||
+    next.monthDay !== chore.monthDay;
+  return rescheduled ? { ...next, completedOccurrences: {} } : next;
+}
 
-            if (chore.lastCompletedOn === day) {
-              return {
-                ...chore,
-                lastCompletedOn: null,
-                completedOccurrences: Object.fromEntries(
-                  Object.entries(chore.completedOccurrences).filter(([, completedOn]) => completedOn !== day),
-                ),
-              };
-            }
+function applyToggleComplete(chore: Chore, onDate: Date): Chore {
+  const day = formatDate(onDate);
+  if (chore.lastCompletedOn === day) {
+    return {
+      ...chore,
+      lastCompletedOn: null,
+      completedOccurrences: Object.fromEntries(
+        Object.entries(chore.completedOccurrences).filter(([, completedOn]) => completedOn !== day),
+      ),
+    };
+  }
+  if (!chore.daySpecific) {
+    return { ...chore, lastCompletedOn: day };
+  }
+  return {
+    ...chore,
+    lastCompletedOn: day,
+    completedOccurrences: pruneOccurrences(
+      { ...chore.completedOccurrences, [currentOccurrence(chore, onDate)]: day },
+      onDate,
+    ),
+  };
+}
 
-            if (!chore.daySpecific) {
-              // The next due date is measured from today, so the schedule shifts with it.
-              return { ...chore, lastCompletedOn: day };
-            }
+export const useChoreStore = create<ChoreState>()((set, get) => ({
+  chores: [],
+  isLoading: false,
+  hasLoaded: false,
 
-            return {
-              ...chore,
-              lastCompletedOn: day,
-              completedOccurrences: pruneOccurrences(
-                { ...chore.completedOccurrences, [currentOccurrence(chore, onDate)]: day },
-                onDate,
-              ),
-            };
-          }),
-        });
-      },
-    }),
-    {
-      name: 'chore-storage',
-      version: 3,
-      migrate: (persistedState) => {
-        const state = persistedState as { chores?: unknown[] } | undefined;
-        const chores = Array.isArray(state?.chores)
-          ? state.chores.map(normalizeChore).filter((chore): chore is Chore => chore != null)
-          : [];
-        return { chores };
-      },
-      onRehydrateStorage: () => (state) => {
-        if (!state) return;
-        state.chores = state.chores
-          .map(normalizeChore)
-          .filter((chore): chore is Chore => chore != null);
-      },
-    },
-  ),
-);
+  load: async () => {
+    if (get().isLoading) return;
+    set({ isLoading: true });
+    try {
+      const chores = await choreService.loadChores();
+      set({ chores, isLoading: false, hasLoaded: true });
+    } catch (error) {
+      console.error('Error loading chores:', error);
+      set({ isLoading: false, hasLoaded: true });
+    }
+  },
+
+  addChore: async (draft) => {
+    const created = await choreService.createChore({
+      title: draft.title,
+      assignee: draft.assignee,
+      every: clampEvery(draft.every),
+      unit: draft.unit,
+      weekday: clampWeekday(draft.weekday),
+      monthDay: clampMonthDay(draft.monthDay),
+      icon: draft.icon,
+      daySpecific: draft.daySpecific,
+      lastCompletedOn: null,
+      completedOccurrences: {},
+      createdAt: new Date().toISOString(),
+    });
+    set({ chores: [...get().chores, created] });
+    return created;
+  },
+
+  updateChore: async (id, draft) => {
+    const current = get().chores.find((chore) => chore.id === id);
+    if (!current) return;
+    const next = applyChoreDraft(current, draft);
+    const saved = await choreService.updateChore(id, next);
+    set({ chores: get().chores.map((chore) => (chore.id === id ? saved : chore)) });
+  },
+
+  removeChore: async (id) => {
+    await choreService.deleteChore(id);
+    set({ chores: get().chores.filter((chore) => chore.id !== id) });
+  },
+
+  toggleComplete: async (id, onDate = new Date()) => {
+    const current = get().chores.find((chore) => chore.id === id);
+    if (!current) return;
+    const next = applyToggleComplete(current, onDate);
+    set({ chores: get().chores.map((chore) => (chore.id === id ? next : chore)) });
+    try {
+      const saved = await choreService.updateChore(id, next);
+      set({ chores: get().chores.map((chore) => (chore.id === id ? saved : chore)) });
+    } catch (error) {
+      console.error('Error toggling chore:', error);
+      set({ chores: get().chores.map((chore) => (chore.id === id ? current : chore)) });
+    }
+  },
+}));

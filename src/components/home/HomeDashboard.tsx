@@ -29,8 +29,11 @@ export function HomeDashboard() {
   const grain = useExpenseStore((s) => s.grain);
   const summary = useExpenseStore((s) => s.summary);
   const events = useCalendarStore((s) => s.events);
+  const calendarLoaded = useCalendarStore((s) => s.hasLoaded);
   const loadEvents = useCalendarStore((s) => s.loadEvents);
   const chores = useChoreStore((s) => s.chores);
+  const choresLoaded = useChoreStore((s) => s.hasLoaded);
+  const expensesLoaded = useExpenseStore((s) => s.hasLoaded);
   const editing = useHomeLayoutStore((s) => s.editing);
   const scales = useHomeLayoutStore((s) => s.scales);
   const setEditing = useHomeLayoutStore((s) => s.setEditing);
@@ -38,6 +41,7 @@ export function HomeDashboard() {
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const [monthSpend, setMonthSpend] = useState(0);
   const [vsPriorPercent, setVsPriorPercent] = useState<number | null>(null);
+  const [monthLoaded, setMonthLoaded] = useState(false);
 
   const markSynced = useCallback((at = new Date()) => {
     setLastSynced(at);
@@ -81,8 +85,9 @@ export function HomeDashboard() {
           setVsPriorPercent(null);
         }
         markSynced();
+        setMonthLoaded(true);
       })
-      .catch(() => undefined);
+      .catch(() => setMonthLoaded(true));
   }, [expenseTimeZone, markSynced]);
 
   const today = formatDate(new Date());
@@ -110,6 +115,7 @@ export function HomeDashboard() {
         camerasOnline={cameras.length}
         camerasTotal={cameras.length}
         compact={scales.stats === 'compact'}
+        loading={!expensesLoaded || !choresLoaded || !calendarLoaded || !monthLoaded}
       />
     ),
     expenses: <ExpenseLoggerCard compact={scales.expenses === 'compact'} />,
@@ -119,9 +125,12 @@ export function HomeDashboard() {
     latency: <LatencyTrackerCard onSynced={markSynced} compact={scales.latency === 'compact'} />,
     cameras: <CameraGridCard />,
   }), [
+    calendarLoaded,
     cameras.length,
     choresCompletedToday,
     choresDueToday,
+    choresLoaded,
+    expensesLoaded,
     markSynced,
     monthSpend,
     nextEventLabel,
@@ -135,6 +144,7 @@ export function HomeDashboard() {
     summary?.weeklyBudgetCents,
     todayEvents.length,
     vsPriorPercent,
+    monthLoaded,
   ]);
 
   return (

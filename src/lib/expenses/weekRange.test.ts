@@ -50,11 +50,17 @@ describe('getExpenseWeekRange', () => {
   });
 
   it('survives the spring-forward DST edge in America/Los_Angeles', () => {
-    const range = getExpenseWeekRange('2026-03-08', TZ);
+    const range = getExpenseWeekRange('2026-03-08', 'America/Los_Angeles');
     expect(range.weekKey).toBe('2026-03-06');
     expect(range.weekEndDate).toBe('2026-03-12');
-    expect(getExpenseWeekRange('2026-03-06', TZ).weekStart.toISOString()).toBe(
+    expect(getExpenseWeekRange('2026-03-06', 'America/Los_Angeles').weekStart.toISOString()).toBe(
       '2026-03-06T08:00:00.000Z',
+    );
+  });
+
+  it('keeps Arizona on UTC-7 in March, when Pacific has sprung forward', () => {
+    expect(getExpenseWeekRange('2026-03-06', TZ).weekStart.toISOString()).toBe(
+      '2026-03-06T07:00:00.000Z',
     );
   });
 });

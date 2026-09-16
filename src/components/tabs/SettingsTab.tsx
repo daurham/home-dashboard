@@ -186,7 +186,7 @@ export function SettingsTab() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Expense weeks run Friday 12:00 AM through Thursday 11:59:59 PM in this timezone (default America/Los_Angeles).
+                Expense weeks run Friday 12:00 AM through Thursday 11:59:59 PM in this timezone (default America/Phoenix).
               </p>
             </div>
           </div>

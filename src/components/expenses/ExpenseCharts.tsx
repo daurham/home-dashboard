@@ -1,5 +1,6 @@
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ReferenceLine, XAxis, YAxis } from 'recharts';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
 import { DEFAULT_WEEKLY_BUDGET_CENTS } from '@/lib/expenses/constants';
 import { formatBudget, formatCents, remainingCents } from '@/lib/expenses/money';
 import { formatMonthLabel, formatWeekLabel } from '@/lib/expenses/format';
@@ -16,8 +17,8 @@ interface ExpenseChartsProps {
 export function ExpenseCharts({ summary, grain, chartMode, selectedKey }: ExpenseChartsProps) {
   if (!summary) {
     return (
-      <div className="flex h-[220px] items-center justify-center rounded-xl border border-dashed bg-card text-sm text-muted-foreground">
-        Loading chart…
+      <div className="flex h-[220px] items-center" role="status" aria-label="Loading chart">
+        <Skeleton className="h-full w-full rounded-xl" />
       </div>
     );
   }

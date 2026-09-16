@@ -15,6 +15,7 @@ import { ExpenseBudgetHero } from '@/components/expenses/ExpenseBudgetHero';
 import { CategoryManagerSheet } from '@/components/expenses/CategoryManagerSheet';
 import type { Expense } from '@/services/expenseService';
 import { cn } from '@/lib/utils';
+import { FetchSkeleton } from '@/components/ui/fetch-skeleton';
 
 export function ExpensesTab() {
   const expenseTimeZone = usePreferencesStore((state) => state.expenseTimeZone);
@@ -27,6 +28,7 @@ export function ExpensesTab() {
     categories,
     summary,
     isLoading,
+    hasLoaded,
     loadError,
     load,
     setGrain,
@@ -107,6 +109,7 @@ export function ExpensesTab() {
             weeklyBudgetCents={summary?.weeklyBudgetCents}
             vsPriorCents={delta}
             onSaveBudget={setWeeklyBudget}
+            loading={!hasLoaded}
           />
         </div>
 
@@ -146,12 +149,16 @@ export function ExpensesTab() {
       </div>
 
       <div className="rounded-xl border bg-card p-3 md:p-4">
-        <ExpenseCharts
-          summary={summary}
-          grain={grain}
-          chartMode={chartMode}
-          selectedKey={grain === 'week' ? selectedWeekKey : selectedMonthKey}
-        />
+        {!hasLoaded ? (
+          <FetchSkeleton lines={1} lineClassName="h-[220px] rounded-xl" />
+        ) : (
+          <ExpenseCharts
+            summary={summary}
+            grain={grain}
+            chartMode={chartMode}
+            selectedKey={grain === 'week' ? selectedWeekKey : selectedMonthKey}
+          />
+        )}
       </div>
 
       <div className="space-y-2">
@@ -160,7 +167,7 @@ export function ExpensesTab() {
         </h3>
         <ExpenseList
           expenses={expenses}
-          loading={isLoading}
+          loading={isLoading || !hasLoaded}
           onSelect={(expense) => {
             setEditing(expense);
             setFormOpen(true);

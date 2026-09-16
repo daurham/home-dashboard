@@ -7,6 +7,7 @@ import { formatCheckedAgo, formatLatency } from '@/lib/latency/format';
 import type { LatencySnapshot, LatencyStatus, LatencyTargetSnapshot } from '@/lib/latency/format';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { FetchSkeleton } from '@/components/ui/fetch-skeleton';
 
 const DOT: Record<LatencyStatus, string> = {
   up: 'bg-emerald-500',
@@ -125,20 +126,25 @@ export function LatencyTrackerCard({ onSynced, compact = false }: { onSynced?: (
         </p>
       )}
 
+      {!snapshot && !error ? (
+        <FetchSkeleton
+          lines={compact ? 4 : 5}
+          lineClassName={compact ? 'h-7 rounded-lg' : 'h-9 rounded-lg'}
+          className="min-h-0 flex-1"
+        />
+      ) : (
       <ul
         className={cn('grid min-h-0 flex-1 overflow-hidden', compact ? 'gap-1' : 'gap-1.5', twoCol && 'grid-cols-2')}
         style={{ gridAutoRows: 'minmax(0, 1fr)' }}
       >
         {targets.map(renderRow)}
-        {!snapshot && !error && (
-          <li className="flex items-center justify-center text-xs text-muted-foreground">Loading probes…</li>
-        )}
         {snapshot && targets.length === 0 && (
           <li className="flex items-center justify-center px-2 text-center text-xs text-muted-foreground">
             No probe targets configured.
           </li>
         )}
       </ul>
+      )}
 
       <LatencyDetailDialog target={detail} onClose={() => setDetailId(null)} />
     </HubCard>

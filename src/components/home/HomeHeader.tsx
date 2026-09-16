@@ -3,6 +3,7 @@ import { CalendarDays, Cloud, CloudLightning, CloudRain, CloudSnow, Lock, Moon, 
 import { useDashboardStore, usePreferencesStore } from '@/lib/store';
 import { WeatherService, WeatherData } from '@/services/weatherService';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const weatherIcons = {
   sunny: Sun,
@@ -82,11 +83,20 @@ export function HomeHeader({ actions }: { actions?: ReactNode }) {
       <div className="flex shrink-0 items-center gap-2">
         {config.weather.enabled && (
           <div className="flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-2.5 py-1">
-            <WeatherIcon className="h-4 w-4 text-amber-400" />
-            <span className="text-sm font-semibold tabular-nums">
-              {weather ? `${weather.temperature}${temperatureUnit}` : '—'}
-            </span>
-            <span className="hidden text-[11px] text-muted-foreground sm:inline">{conditionText}</span>
+            {weather ? (
+              <>
+                <WeatherIcon className="h-4 w-4 text-amber-400" />
+                <span className="text-sm font-semibold tabular-nums">
+                  {`${weather.temperature}${temperatureUnit}`}
+                </span>
+                <span className="hidden text-[11px] text-muted-foreground sm:inline">{conditionText}</span>
+              </>
+            ) : (
+              <span className="flex items-center gap-1.5" role="status" aria-label="Loading weather">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-4 w-10 rounded-md" />
+              </span>
+            )}
           </div>
         )}
         <div className="hidden items-center gap-1.5 rounded-full border border-border/70 bg-card px-2.5 py-1 sm:flex">

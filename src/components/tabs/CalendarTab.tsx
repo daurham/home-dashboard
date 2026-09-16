@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { Cloud, CloudRain, CloudSnow, Sun, CloudLightning, Moon } from 'lucide-react';
 import { WeatherService, WeatherData } from '@/services/weatherService';
 import { usePreferencesStore } from '@/lib/store';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const weatherIcons = {
   sunny: Sun,
@@ -95,7 +96,10 @@ function MobileWeather() {
   
   if (loading || !weather) {
     return (
-      <div className="text-sm text-muted-foreground">Loading...</div>
+      <div className="flex items-center gap-2" role="status" aria-label="Loading weather">
+        <Skeleton className="h-5 w-5 rounded-full" />
+        <Skeleton className="h-4 w-16 rounded-md" />
+      </div>
     );
   }
   

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Check, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -28,10 +34,12 @@ import {
   type ChoreDraft,
   type ChoreIconId,
   type ChoreIntervalUnit,
+  type ChoreStatusTone,
 } from '@/lib/store/choreStore';
 import { formatDate } from '@/lib/calendar';
 import { usePreferencesStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { FetchSkeleton } from '@/components/ui/fetch-skeleton';
 
 const INTERVAL_PRESETS: Array<{ label: string; every: number; unit: ChoreIntervalUnit }> = [
   { label: 'Every 3 days', every: 3, unit: 'days' },
@@ -41,6 +49,24 @@ const INTERVAL_PRESETS: Array<{ label: string; every: number; unit: ChoreInterva
   { label: 'Every 2 months', every: 2, unit: 'months' },
   { label: 'Every 6 months', every: 6, unit: 'months' },
 ];
+
+const TONE_RANK: Record<ChoreStatusTone, number> = {
+  overdue: 0,
+  today: 1,
+  tomorrow: 2,
+  muted: 3,
+  yesterday: 4,
+  done: 5,
+};
+
+const TONE_TEXT: Record<ChoreStatusTone, string> = {
+  overdue: 'text-rose-600 dark:text-rose-400',
+  today: 'text-emerald-600 dark:text-emerald-400',
+  tomorrow: 'text-amber-600 dark:text-amber-400',
+  done: 'text-muted-foreground',
+  yesterday: 'text-muted-foreground',
+  muted: 'text-muted-foreground',
+};
 
 const emptyDraft = (assignee: string): ChoreDraft => ({
   title: '',
@@ -55,6 +81,7 @@ const emptyDraft = (assignee: string): ChoreDraft => ({
 
 export function ChoresTab() {
   const chores = useChoreStore((s) => s.chores);
+  const hasLoaded = useChoreStore((s) => s.hasLoaded);
   const addChore = useChoreStore((s) => s.addChore);
   const updateChore = useChoreStore((s) => s.updateChore);
   const removeChore = useChoreStore((s) => s.removeChore);
@@ -66,7 +93,15 @@ export function ChoresTab() {
 
   const today = formatDate(new Date());
   const ranked = useMemo(
-    () => [...chores].map((chore) => ({ chore, status: getChoreStatus(chore) })),
+    () =>
+      [...chores]
+        .map((chore) => ({ chore, status: getChoreStatus(chore) }))
+        .sort(
+          (a, b) =>
+            TONE_RANK[a.status.tone] - TONE_RANK[b.status.tone] ||
+            a.status.dueOn.localeCompare(b.status.dueOn) ||
+            a.chore.title.localeCompare(b.chore.title),
+        ),
     [chores],
   );
 
@@ -102,11 +137,17 @@ export function ChoresTab() {
     draft.every === every && draft.unit === unit;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Recurring Chores</h2>
-          <p className="text-muted-foreground">Household tasks on whatever cadence they actually use.</p>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-bold text-foreground">Chores</h2>
+          <p className="text-sm text-muted-foreground">
+            {hasLoaded
+              ? ranked.length === 0
+                ? 'Add the first household chore.'
+                : `${ranked.length} recurring`
+              : 'Loading household chores.'}
+          </p>
         </div>
         <Button onClick={startCreate}>
           <Plus className="h-4 w-4" />
@@ -114,37 +155,76 @@ export function ChoresTab() {
         </Button>
       </div>
 
-      <div className="grid gap-3">
-        {ranked.map(({ chore, status }) => {
-          const Icon = CHORE_ICONS[chore.icon];
-          return (
-            <HubCard key={chore.id} className="flex flex-wrap items-center gap-3 p-4">
-              <span className={cn('flex h-11 w-11 items-center justify-center rounded-full', CHORE_ICON_COLORS[chore.icon])}>
-                <Icon className="h-5 w-5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">{chore.title}</p>
-                <p className="text-sm text-muted-foreground">
-                  {chore.assignee} · {formatChoreInterval(chore)}
-                </p>
-              </div>
-              <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">{status.label}</span>
-              <Button variant="outline" size="sm" onClick={() => toggleComplete(chore.id)}>
-                {chore.lastCompletedOn === today ? 'Undo' : 'Mark done'}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => startEdit(chore)}>Edit</Button>
-              <Button variant="ghost" size="icon" onClick={() => removeChore(chore.id)} aria-label="Delete chore">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </HubCard>
-          );
-        })}
-        {chores.length === 0 && (
-          <HubCard className="p-8 text-center text-muted-foreground">
-            No recurring chores yet. Add the first one to see it on Home.
-          </HubCard>
+      <HubCard className="overflow-hidden p-0">
+        {!hasLoaded ? (
+          <div className="p-3">
+            <FetchSkeleton lines={6} lineClassName="h-10 rounded-lg" />
+          </div>
+        ) : ranked.length === 0 ? (
+          <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+            No recurring chores yet.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {ranked.map(({ chore, status }) => {
+              const Icon = CHORE_ICONS[chore.icon];
+              const doneToday = chore.lastCompletedOn === today;
+              return (
+                <li key={chore.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-muted/40">
+                  <button
+                    type="button"
+                    onClick={() => toggleComplete(chore.id)}
+                    className={cn(
+                      'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors',
+                      doneToday
+                        ? 'border-emerald-500 bg-emerald-500 text-white'
+                        : 'border-border bg-background text-transparent hover:border-emerald-400',
+                    )}
+                    aria-label={doneToday ? `Undo ${chore.title}` : `Mark ${chore.title} done`}
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                  </button>
+                  <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full', CHORE_ICON_COLORS[chore.icon])}>
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(chore)}
+                    className="min-w-0 flex-1 py-0.5 text-left"
+                  >
+                    <span className={cn('block truncate text-sm font-medium leading-tight', doneToday && 'text-muted-foreground')}>
+                      {chore.title}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {chore.assignee} · {formatChoreInterval(chore)}
+                    </span>
+                  </button>
+                  <span className={cn('max-w-[6.5rem] shrink-0 truncate text-right text-xs font-medium', TONE_TEXT[status.tone])}>
+                    {status.label}
+                  </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={`${chore.title} actions`}>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => startEdit(chore)}>Edit</DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => removeChore(chore.id)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </li>
+              );
+            })}
+          </ul>
         )}
-      </div>
+      </HubCard>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

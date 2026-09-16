@@ -2,8 +2,7 @@
  * Household expense week: Friday 00:00:00.000 → Thursday 23:59:59.999
  * in the household timezone.
  *
- * Default timezone is America/Los_Angeles — neither this dashboard nor
- * home-ai had a prior household TZ convention.
+ * Default timezone is America/Phoenix (Arizona, no DST).
  *
  * Month vs week: aggregation by week uses the Friday of the Fri–Thu range.
  * Aggregation by month uses the calendar month of occurred_on. A week that
@@ -11,7 +10,7 @@
  * across October and November in month charts.
  */
 
-export const DEFAULT_EXPENSE_TIMEZONE = 'America/Los_Angeles';
+export const DEFAULT_EXPENSE_TIMEZONE = 'America/Phoenix';
 
 const WEEKDAY_INDEX: Record<string, number> = {
   Sun: 0,

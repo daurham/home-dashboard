@@ -222,6 +222,52 @@ export const expenseCategoriesApi = {
     apiRequest<DbCategoryRow>(`/expense-categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 };
 
+export interface DbChore {
+  id: string;
+  title: string;
+  assignee: string;
+  every: number;
+  unit: 'days' | 'weeks' | 'months';
+  weekday: number;
+  monthDay: number;
+  icon: string;
+  daySpecific: boolean;
+  lastCompletedOn: string | null;
+  completedOccurrences: Record<string, string>;
+  createdAt: string;
+}
+
+export interface DbHabit {
+  id: string;
+  name: string;
+  completions: Record<string, boolean>;
+  createdAt: string;
+}
+
+export const choresApi = {
+  list: () => apiRequest<DbChore[]>('/chores'),
+  create: (data: Partial<DbChore>) =>
+    apiRequest<DbChore>('/chores', { method: 'POST', body: JSON.stringify(data) }),
+  importAll: (chores: Partial<DbChore>[]) =>
+    apiRequest<DbChore[]>('/chores/import', { method: 'POST', body: JSON.stringify({ chores }) }),
+  update: (id: string, data: Partial<DbChore>) =>
+    apiRequest<DbChore>(`/chores/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: string) =>
+    apiRequest<{ message: string; id: string }>(`/chores/${id}`, { method: 'DELETE' }),
+};
+
+export const habitsApi = {
+  list: () => apiRequest<DbHabit[]>('/habits'),
+  create: (data: Partial<DbHabit>) =>
+    apiRequest<DbHabit>('/habits', { method: 'POST', body: JSON.stringify(data) }),
+  importAll: (habits: Partial<DbHabit>[]) =>
+    apiRequest<DbHabit[]>('/habits/import', { method: 'POST', body: JSON.stringify({ habits }) }),
+  update: (id: string, data: Partial<DbHabit>) =>
+    apiRequest<DbHabit>(`/habits/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: string) =>
+    apiRequest<{ message: string; id: string }>(`/habits/${id}`, { method: 'DELETE' }),
+};
+
 export const expenseSettingsApi = {
   get: () => apiRequest<DbExpenseSettings>('/expense-settings'),
   update: (data: { weekly_budget_cents?: number; weekly_budget?: number }) =>

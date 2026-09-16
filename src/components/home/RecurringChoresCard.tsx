@@ -9,6 +9,7 @@ import {
 } from '@/lib/store/choreStore';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { FetchSkeleton } from '@/components/ui/fetch-skeleton';
 
 const STATUS_STYLES: Record<ChoreStatusTone, string> = {
   overdue: 'bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
@@ -44,6 +45,7 @@ function compactLabel(status: ChoreStatus): string {
 
 export function RecurringChoresCard({ compact = false }: { compact?: boolean }) {
   const chores = useChoreStore((s) => s.chores);
+  const hasLoaded = useChoreStore((s) => s.hasLoaded);
   const toggleComplete = useChoreStore((s) => s.toggleComplete);
   const setActiveSidebarTab = useUIStore((s) => s.setActiveSidebarTab);
 
@@ -69,7 +71,9 @@ export function RecurringChoresCard({ compact = false }: { compact?: boolean }) 
           </button>
         </div>
 
-        {visible.length === 0 ? (
+        { !hasLoaded ? (
+          <FetchSkeleton lines={compact ? 3 : 4} lineClassName={compact ? 'h-8 rounded-lg' : 'h-12 rounded-xl'} />
+        ) : visible.length === 0 ? (
           <div className="flex min-h-0 flex-1 items-center justify-center">
             <p className="text-[11px] text-muted-foreground">All caught up this week.</p>
           </div>
@@ -119,7 +123,9 @@ export function RecurringChoresCard({ compact = false }: { compact?: boolean }) 
         </button>
       </div>
 
-      {visible.length === 0 ? (
+      {!hasLoaded ? (
+        <FetchSkeleton lines={4} lineClassName="h-12 rounded-xl" />
+      ) : visible.length === 0 ? (
         <div className="flex min-h-0 flex-1 items-center justify-center">
           <p className="text-xs text-muted-foreground">All caught up — nothing due this week.</p>
         </div>

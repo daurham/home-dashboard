@@ -3,6 +3,7 @@ import { Cloud, CloudRain, CloudSnow, Sun, CloudLightning, Moon } from 'lucide-r
 import { WeatherService, WeatherData } from '@/services/weatherService';
 import { Card } from '@/components/ui/card';
 import { useDashboardStore, usePreferencesStore } from '@/lib/store';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const weatherIcons = {
   sunny: Sun,
@@ -55,8 +56,14 @@ export function WeatherWidget() {
   
   if (loading || !weather) {
     return (
-      <Card className="py-1.5 px-2.5 xl:p-6 flex items-center justify-center bg-card">
-        <div className="text-xs xl:text-base text-muted-foreground">Loading weather...</div>
+      <Card className="flex items-center justify-center bg-card py-1.5 px-2.5 xl:p-6">
+        <div className="flex w-full items-center gap-3" role="status" aria-label="Loading weather">
+          <Skeleton className="h-8 w-8 shrink-0 rounded-full xl:h-12 xl:w-12" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-5 w-24 rounded-md" />
+            <Skeleton className="h-3 w-36 rounded-md" />
+          </div>
+        </div>
       </Card>
     );
   }

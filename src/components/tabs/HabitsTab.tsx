@@ -14,11 +14,13 @@ import { HubCard } from '@/components/home/HubCard';
 import { getHabitWeekDays, habitProgress, useHabitStore } from '@/lib/store/habitStore';
 import { formatDate, isToday } from '@/lib/calendar';
 import { cn } from '@/lib/utils';
+import { HabitFetchSkeleton } from '@/components/ui/fetch-skeleton';
 
 const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export function HabitsTab() {
   const habits = useHabitStore((s) => s.habits);
+  const hasLoaded = useHabitStore((s) => s.hasLoaded);
   const addHabit = useHabitStore((s) => s.addHabit);
   const updateHabit = useHabitStore((s) => s.updateHabit);
   const removeHabit = useHabitStore((s) => s.removeHabit);
@@ -61,7 +63,11 @@ export function HabitsTab() {
       </div>
 
       <HubCard className="overflow-x-auto p-5">
-        <table className="w-full min-w-[520px] border-separate border-spacing-y-2 text-sm">
+        {!hasLoaded ? (
+          <HabitFetchSkeleton rows={4} />
+        ) : (
+          <>
+            <table className="w-full min-w-[520px] border-separate border-spacing-y-2 text-sm">
           <thead>
             <tr className="text-xs uppercase tracking-wide text-muted-foreground">
               <th className="pb-2 text-left font-medium">Habit</th>
@@ -113,9 +119,11 @@ export function HabitsTab() {
               );
             })}
           </tbody>
-        </table>
-        {habits.length === 0 && (
-          <p className="py-8 text-center text-muted-foreground">No habits yet. Add one to start tracking this week.</p>
+            </table>
+            {habits.length === 0 && (
+              <p className="py-8 text-center text-muted-foreground">No habits yet. Add one to start tracking this week.</p>
+            )}
+          </>
         )}
       </HubCard>
 
