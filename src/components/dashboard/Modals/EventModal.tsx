@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCalendarStore, CalendarEvent, RecurrenceType } from '@/lib/store';
+import { isChoreEventId } from '@/lib/store/choreStore';
 import {
   Dialog,
   DialogContent,
@@ -58,6 +59,10 @@ export function EventModal() {
     e.preventDefault();
     
     if (!selectedDate || !title.trim()) return;
+    if (selectedEvent && isChoreEventId(selectedEvent.id)) {
+      handleClose();
+      return;
+    }
     
     try {
       if (isEditMode && selectedEvent) {
@@ -91,12 +96,15 @@ export function EventModal() {
   
   const handleDelete = async () => {
     if (isEditMode && selectedEvent) {
+      if (isChoreEventId(selectedEvent.id)) {
+        handleClose();
+        return;
+      }
       try {
         await deleteEvent(selectedEvent.id);
         handleClose();
       } catch (error) {
         console.error('Error deleting event:', error);
-        // You could add a toast notification here
       }
     }
   };

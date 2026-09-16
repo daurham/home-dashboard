@@ -1,5 +1,6 @@
 import { formatDate, getEventsForDate } from '@/lib/calendar';
 import { CalendarEvent, useCalendarStore, useDashboardStore, usePreferencesStore } from '@/lib/store';
+import { currentOccurrence, isChoreEventId, parseChoreEventId, useChoreStore } from '@/lib/store/choreStore';
 import { formatTimeString } from '@/lib/utils/timeFormat';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +16,8 @@ export function CalendarDay({ date, events, isToday, isWeekend, onClick }: Calen
   const dateStr = formatDate(date);
   const dayEvents = getEventsForDate(dateStr, events);
   const { setSelectedEvent } = useCalendarStore();
+  const chores = useChoreStore((s) => s.chores);
+  const toggleComplete = useChoreStore((s) => s.toggleComplete);
   const { config } = useDashboardStore();
   const { timeFormat } = usePreferencesStore();
   
@@ -22,7 +25,16 @@ export function CalendarDay({ date, events, isToday, isWeekend, onClick }: Calen
   const taskColor = config.calendar.taskColor;
   
   const handleEventClick = (e: React.MouseEvent, event: CalendarEvent) => {
-    e.stopPropagation(); // Prevent day click
+    e.stopPropagation();
+    if (isChoreEventId(event.id)) {
+      const parsed = parseChoreEventId(event.id);
+      const chore = parsed ? chores.find((item) => item.id === parsed.choreId) : undefined;
+      // Completions are always recorded on today, whether the slot is overdue or still upcoming.
+      if (parsed && chore && (parsed.date === formatDate(new Date()) || parsed.date === currentOccurrence(chore))) {
+        toggleComplete(chore.id);
+      }
+      return;
+    }
     setSelectedEvent(event);
   };
   
@@ -47,11 +59,10 @@ export function CalendarDay({ date, events, isToday, isWeekend, onClick }: Calen
       </div>
       <div className="space-y-0.5 md:space-y-1">
         {dayEvents.slice(0, 3).map((event) => {
+          const isChore = isChoreEventId(event.id);
           const isEvent = event.type === 'event';
-          const customColor = isEvent ? eventColor : taskColor;
+          const customColor = isChore ? undefined : isEvent ? eventColor : taskColor;
           const style = customColor ? { backgroundColor: `hsl(${customColor})` } : undefined;
-          
-          // Use composite key to ensure uniqueness across different days for recurring events
           const uniqueKey = `${event.id}-${dateStr}`;
           
           return (
@@ -63,12 +74,14 @@ export function CalendarDay({ date, events, isToday, isWeekend, onClick }: Calen
                 'hover:opacity-80 transition-opacity',
                 'text-[9px] sm:text-[10px] md:text-[11px] leading-tight',
                 'w-full',
-                !customColor && (isEvent ? 'bg-calendar-event' : 'bg-calendar-task')
+                isChore && 'bg-amber-600',
+                !isChore && !customColor && (isEvent ? 'bg-calendar-event' : 'bg-calendar-task')
               )}
               style={style}
+              title={isChore ? event.description : event.title}
             >
               <div className="flex items-start gap-0.5 md:gap-1 w-full overflow-hidden">
-                {event.time && (
+                {event.time && !isChore && (
                   <span className="whitespace-nowrap flex-shrink-0 text-[8px] sm:text-[9px] md:text-[10px]">
                     {formatTimeString(event.time, timeFormat)}
                   </span>

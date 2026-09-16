@@ -23,6 +23,8 @@ export function LatencySparkline({ samples, status, className }: LatencySparklin
   return (
     <svg
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+      // Fill whatever box the caller gives it; non-scaling strokes keep the line even.
+      preserveAspectRatio="none"
       className={cn('h-9 w-32 overflow-visible', className)}
       aria-hidden
     >
@@ -34,6 +36,7 @@ export function LatencySparkline({ samples, status, className }: LatencySparklin
           className={cn(STATUS_STROKE[status], 'stroke-[1.75]')}
           strokeLinejoin="round"
           strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
         />
       ))}
       {polylines.length === 0 && (
@@ -43,6 +46,7 @@ export function LatencySparkline({ samples, status, className }: LatencySparklin
           x2={WIDTH}
           y2={HEIGHT - 2}
           className="stroke-muted-foreground/30 stroke-[1.5]"
+          vectorEffect="non-scaling-stroke"
         />
       )}
     </svg>

@@ -33,6 +33,12 @@ export {
   getMonthEnd,
 } from './calendarMath';
 
+// Month grid keyboard navigation
+export {
+  calendarKeyStep,
+  shiftMonthKeepingDay,
+} from './gridNavigation';
+
 // Recurrence
 export {
   shouldShowRecurringEvent,

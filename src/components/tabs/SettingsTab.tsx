@@ -31,7 +31,7 @@ const accentColors: Array<{ value: AccentColor; label: string }> = [
 export function SettingsTab() {
   const { themeMode, accentColor, setThemeMode, setAccentColor } = useThemeStore();
   const { config, updateCalendarConfig } = useDashboardStore();
-  const { timeFormat, units, expenseTimeZone, setTimeFormat, setUnits, setExpenseTimeZone } = usePreferencesStore();
+  const { timeFormat, units, expenseTimeZone, greetingName, householdLabel, householdMembers, setTimeFormat, setUnits, setExpenseTimeZone, setGreetingName, setHouseholdLabel, setHouseholdMembers } = usePreferencesStore();
   const [calendarOpen, setCalendarOpen] = useState(false);
   
   return (
@@ -84,6 +84,45 @@ export function SettingsTab() {
                 </Select>
               </div>
               
+              <div className="space-y-2">
+                <Label htmlFor="greeting-name">Greeting name</Label>
+                <Input
+                  id="greeting-name"
+                  value={greetingName}
+                  onChange={(e) => setGreetingName(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Shown on the Home dashboard: “Good morning, {greetingName || 'there'}”.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="household-label">Household label</Label>
+                <Input
+                  id="household-label"
+                  value={householdLabel}
+                  onChange={(e) => setHouseholdLabel(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Shown under the avatar in the sidebar.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="household-members">Household members</Label>
+                <Input
+                  id="household-members"
+                  value={householdMembers.join(', ')}
+                  onChange={(e) => {
+                    const members = e.target.value.split(',').map((part) => part.trim()).filter(Boolean);
+                    setHouseholdMembers(members.length ? members : ['Jake']);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Comma-separated names used for chore assignees.
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="time-format">Time Format</Label>
                 <Select

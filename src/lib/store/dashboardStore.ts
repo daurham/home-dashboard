@@ -10,7 +10,7 @@ interface DashboardState {
 }
 
 function withNewDefaultTabs(config: DashboardConfig): DashboardConfig {
-  const extras: SidebarTab[] = ['cameras', 'expenses', 'latency'];
+  const extras: SidebarTab[] = ['home', 'chores', 'habits', 'cameras', 'expenses', 'latency'];
   const visibleTabs = [...config.visibleTabs];
   for (const tab of extras) {
     if (!visibleTabs.includes(tab)) visibleTabs.push(tab);
@@ -18,6 +18,7 @@ function withNewDefaultTabs(config: DashboardConfig): DashboardConfig {
 
   return {
     ...config,
+    defaultTab: config.defaultTab === 'calendar' ? 'home' : config.defaultTab,
     visibleTabs,
   };
 }

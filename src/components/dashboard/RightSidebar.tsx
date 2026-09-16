@@ -6,6 +6,7 @@ import { getModuleById } from '@/lib/modules/registry';
 import { ModuleSlot } from '@/components/modules/ModuleSlot';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import type { ModuleType } from '@/lib/store/moduleStore';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +19,7 @@ export function RightSidebar() {
   const { modules, removeModule } = useModuleStore();
   const isMobile = useIsMobile();
 
-  const renderModule = (moduleType: string | null, slotIndex: 0 | 1) => {
+  const renderModule = (moduleType: ModuleType, slotIndex: 0 | 1) => {
     if (!moduleType) {
       return <ModuleSlot slotIndex={slotIndex} />;
     }

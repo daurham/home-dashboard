@@ -7,3 +7,6 @@ export { SettingsTab } from './SettingsTab';
 export { AITab } from './AITab';
 export { ExpensesTab } from './ExpensesTab';
 export { LatencySparklinesTab } from './LatencySparklinesTab';
+export { HomeTab } from './HomeTab';
+export { ChoresTab } from './ChoresTab';
+export { HabitsTab } from './HabitsTab';

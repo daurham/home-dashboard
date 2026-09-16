@@ -1,7 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type SidebarTab = 'calendar' | 'devices' | 'cameras' | 'security' | 'settings' | 'ai' | 'plants' | 'expenses' | 'latency';
+export type SidebarTab =
+  | 'home'
+  | 'expenses'
+  | 'chores'
+  | 'calendar'
+  | 'habits'
+  | 'cameras'
+  | 'latency'
+  | 'plants'
+  | 'devices'
+  | 'security'
+  | 'ai'
+  | 'settings';
 
 interface UIState {
   activeSidebarTab: SidebarTab;
@@ -23,7 +35,7 @@ const getInitialSidebarState = () => {
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
-      activeSidebarTab: 'calendar',
+      activeSidebarTab: 'home',
       sidebarCollapsed: getInitialSidebarState(), // Collapsed by default on mobile
       rightSidebarCollapsed: getInitialSidebarState(), // Collapsed by default on mobile
       setActiveSidebarTab: (tab) => set({ activeSidebarTab: tab }),
@@ -32,6 +44,14 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'ui-storage',
+      version: 2,
+      migrate: (persistedState, version) => {
+        const persisted = persistedState as Partial<UIState>;
+        if (version < 2) {
+          return { ...persisted, activeSidebarTab: 'home' };
+        }
+        return persisted;
+      },
     }
   )
 );

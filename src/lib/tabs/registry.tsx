@@ -1,6 +1,33 @@
-import { Calendar, Home, Shield, Settings, Sparkles, LucideIcon, Leaf, Video, Wallet, Activity } from 'lucide-react';
+import {
+  Activity,
+  Calendar,
+  Cpu,
+  Home,
+  Leaf,
+  Settings,
+  Shield,
+  Sparkles,
+  Target,
+  Video,
+  Wallet,
+  Users,
+  LucideIcon,
+} from 'lucide-react';
 import { SidebarTab } from '@/lib/store';
-import { CalendarTab, PlantsTab, DevicesTab, CamerasTab, SecurityTab, SettingsTab, AITab, ExpensesTab, LatencySparklinesTab } from '@/components/tabs';
+import {
+  CalendarTab,
+  PlantsTab,
+  DevicesTab,
+  CamerasTab,
+  SecurityTab,
+  SettingsTab,
+  AITab,
+  ExpensesTab,
+  LatencySparklinesTab,
+  HomeTab,
+  ChoresTab,
+  HabitsTab,
+} from '@/components/tabs';
 
 export interface TabDefinition {
   id: SidebarTab;
@@ -9,22 +36,25 @@ export interface TabDefinition {
   icon: LucideIcon;
   default?: boolean;
   order?: number;
+  /** Primary items shown in the mockup rail. Others go under More. */
+  pin?: 'primary' | 'overflow' | 'footer';
 }
 
 /**
  * Tab registry - centralized definition of all available tabs
- * 
+ *
  * This makes the tab system plug-and-play and future-proof.
  * New tabs can be added here without modifying Sidebar or Dashboard components.
  */
 export const TABS: TabDefinition[] = [
   {
-    id: 'calendar',
-    name: 'Calendar',
-    component: CalendarTab,
-    icon: Calendar,
+    id: 'home',
+    name: 'Home',
+    component: HomeTab,
+    icon: Home,
     default: true,
     order: 1,
+    pin: 'primary',
   },
   {
     id: 'expenses',
@@ -32,27 +62,31 @@ export const TABS: TabDefinition[] = [
     component: ExpensesTab,
     icon: Wallet,
     order: 2,
+    pin: 'primary',
   },
   {
-    id: 'latency',
-    name: 'Latency',
-    component: LatencySparklinesTab,
-    icon: Activity,
+    id: 'chores',
+    name: 'Chores',
+    component: ChoresTab,
+    icon: Users,
     order: 3,
+    pin: 'primary',
   },
   {
-    id: 'plants',
-    name: 'Plants',
-    component: PlantsTab,
-    icon: Leaf,
+    id: 'calendar',
+    name: 'Calendar',
+    component: CalendarTab,
+    icon: Calendar,
     order: 4,
+    pin: 'primary',
   },
   {
-    id: 'devices',
-    name: 'Devices',
-    component: DevicesTab,
-    icon: Home,
+    id: 'habits',
+    name: 'Habits',
+    component: HabitsTab,
+    icon: Target,
     order: 5,
+    pin: 'primary',
   },
   {
     id: 'cameras',
@@ -60,27 +94,55 @@ export const TABS: TabDefinition[] = [
     component: CamerasTab,
     icon: Video,
     order: 6,
+    pin: 'primary',
+  },
+  {
+    id: 'latency',
+    name: 'Latency',
+    component: LatencySparklinesTab,
+    icon: Activity,
+    order: 7,
+    pin: 'overflow',
+  },
+  {
+    id: 'plants',
+    name: 'Plants',
+    component: PlantsTab,
+    icon: Leaf,
+    order: 8,
+    pin: 'overflow',
+  },
+  {
+    id: 'devices',
+    name: 'Devices',
+    component: DevicesTab,
+    icon: Cpu,
+    order: 9,
+    pin: 'overflow',
   },
   {
     id: 'security',
     name: 'Security',
     component: SecurityTab,
     icon: Shield,
-    order: 7,
+    order: 10,
+    pin: 'overflow',
   },
   {
     id: 'ai',
     name: 'AI',
     component: AITab,
     icon: Sparkles,
-    order: 8,
+    order: 11,
+    pin: 'overflow',
   },
   {
     id: 'settings',
     name: 'Settings',
     component: SettingsTab,
     icon: Settings,
-    order: 9,
+    order: 12,
+    pin: 'footer',
   },
 ];
 
@@ -113,4 +175,3 @@ export function getVisibleTabs(visibleTabIds: SidebarTab[]): TabDefinition[] {
 export function getAllTabIds(): SidebarTab[] {
   return TABS.map(tab => tab.id);
 }
-

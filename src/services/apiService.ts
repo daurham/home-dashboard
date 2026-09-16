@@ -3,7 +3,12 @@
  * All database operations go through this service
  */
 
-import type { LatencySnapshot, LatencyTargetSnapshot } from '@/lib/latency/format';
+import type {
+  LatencySnapshot,
+  LatencyTargetConfig,
+  LatencyTargetSnapshot,
+  LatencyTargetWriteBody,
+} from '@/lib/latency/format';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -193,6 +198,18 @@ export const latencyApi = {
   forceCheck: (id: string) =>
     apiRequest<LatencyTargetSnapshot>(`/latency/check/${encodeURIComponent(id)}`, {
       method: 'POST',
+    }),
+  listTargets: () => apiRequest<LatencyTargetConfig[]>('/latency/targets'),
+  createTarget: (data: LatencyTargetWriteBody) =>
+    apiRequest<LatencyTargetConfig>('/latency/targets', { method: 'POST', body: JSON.stringify(data) }),
+  updateTarget: (id: string, data: Partial<LatencyTargetWriteBody>) =>
+    apiRequest<LatencyTargetConfig>(`/latency/targets/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteTarget: (id: string) =>
+    apiRequest<{ message: string; id: string }>(`/latency/targets/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
     }),
 };
 

@@ -73,6 +73,12 @@ export default {
           bg: "hsl(var(--dashboard-bg))",
           panel: "hsl(var(--dashboard-panel))",
         },
+        rail: {
+          DEFAULT: "hsl(var(--rail-background))",
+          foreground: "hsl(var(--rail-foreground))",
+          muted: "hsl(var(--rail-muted))",
+          active: "hsl(var(--rail-active))",
+        },
         calendar: {
           today: "hsl(var(--calendar-today))",
           "today-bg": "hsl(var(--calendar-today-bg))",

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { getFourWeeks, getWeekStart, formatDate, shiftWeek, formatMonthYear, isFirstDayOfMonth } from '@/lib/calendar';
 import { useCalendarStore, useDashboardStore } from '@/lib/store';
+import { mergeChoresIntoEvents, useChoreStore } from '@/lib/store/choreStore';
 import { CalendarWeek } from './CalendarWeek';
 
 const weekDaysMonday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -12,6 +13,7 @@ const weekDaysSunday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { events, setSelectedDate, loadEvents } = useCalendarStore();
+  const chores = useChoreStore((s) => s.chores);
   const { config } = useDashboardStore();
   const firstDayOfWeek = config.calendar.firstDayOfWeek;
   
@@ -29,6 +31,10 @@ export function CalendarView() {
   const weeks = getFourWeeks(currentDate, firstDayOfWeek);
   const currentWeekStart = getWeekStart(new Date(), firstDayOfWeek);
   const weekDays = firstDayOfWeek === 0 ? weekDaysSunday : weekDaysMonday;
+  const visibleEvents = useMemo(() => {
+    const range = getFourWeeks(currentDate, firstDayOfWeek);
+    return mergeChoresIntoEvents(events, chores, range[0][0], range[range.length - 1][6]);
+  }, [chores, currentDate, events, firstDayOfWeek]);
   
   // Determine which weeks need month labels (weeks containing the 1st of a month)
   const weeksWithMonths = useMemo(() => {
@@ -122,7 +128,7 @@ export function CalendarView() {
               )}
               <CalendarWeek
                 week={week}
-                events={events}
+                events={visibleEvents}
                 currentWeekStart={currentWeekStart}
                 onDayClick={handleDayClick}
               />

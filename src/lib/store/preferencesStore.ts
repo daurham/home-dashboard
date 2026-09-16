@@ -9,9 +9,15 @@ interface PreferencesState {
   timeFormat: TimeFormat;
   units: Units;
   expenseTimeZone: string;
+  greetingName: string;
+  householdLabel: string;
+  householdMembers: string[];
   setTimeFormat: (format: TimeFormat) => void;
   setUnits: (units: Units) => void;
   setExpenseTimeZone: (timeZone: string) => void;
+  setGreetingName: (name: string) => void;
+  setHouseholdLabel: (label: string) => void;
+  setHouseholdMembers: (members: string[]) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -20,9 +26,15 @@ export const usePreferencesStore = create<PreferencesState>()(
       timeFormat: '12-hour',
       units: 'imperial',
       expenseTimeZone: DEFAULT_EXPENSE_TIMEZONE,
+      greetingName: 'Jake',
+      householdLabel: 'Jake & household',
+      householdMembers: ['Jake', 'Wife'],
       setTimeFormat: (format) => set({ timeFormat: format }),
       setUnits: (units) => set({ units }),
       setExpenseTimeZone: (expenseTimeZone) => set({ expenseTimeZone }),
+      setGreetingName: (greetingName) => set({ greetingName }),
+      setHouseholdLabel: (householdLabel) => set({ householdLabel }),
+      setHouseholdMembers: (householdMembers) => set({ householdMembers }),
     }),
     {
       name: 'preferences-storage',
@@ -32,6 +44,11 @@ export const usePreferencesStore = create<PreferencesState>()(
           ...currentState,
           ...persisted,
           expenseTimeZone: persisted?.expenseTimeZone || DEFAULT_EXPENSE_TIMEZONE,
+          greetingName: persisted?.greetingName || 'Jake',
+          householdLabel: persisted?.householdLabel || 'Jake & household',
+          householdMembers: persisted?.householdMembers?.length
+            ? persisted.householdMembers
+            : ['Jake', 'Wife'],
         };
       },
     }

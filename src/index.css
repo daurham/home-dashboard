@@ -13,8 +13,16 @@ All colors MUST be HSL.
     --foreground: 222 47% 11%;
     
     /* Dashboard-specific colors */
-    --dashboard-bg: 240 20% 99%;
+    --dashboard-bg: 40 23% 97%;
     --dashboard-panel: 0 0% 100%;
+    
+    /* Left nav rail (always dark, matching the hub layout) */
+    --rail-background: 222 32% 13%;
+    --rail-foreground: 210 20% 96%;
+    --rail-muted: 215 14% 62%;
+    --rail-active: 0 0% 100%;
+    --rail-active-bg: 0 0% 100% / 0.1;
+    --rail-hover: 0 0% 100% / 0.06;
     
     /* Card colors */
     --card: 0 0% 100%;
@@ -80,7 +88,9 @@ All colors MUST be HSL.
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     
-    --radius: 0.75rem;
+    --radius: 1rem;
+    --hub-radius: 1.25rem;
+    --hub-shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 10px 24px rgb(16 24 40 / 0.05);
     
     /* Responsive scaling variables - Base (desktop) */
     --scale-base: 1;
@@ -140,8 +150,15 @@ All colors MUST be HSL.
     --foreground: 210 40% 98%;
     
     /* Dashboard-specific colors */
-    --dashboard-bg: 222 47% 5%;
-    --dashboard-panel: 222 47% 8%;
+    --dashboard-bg: 222 32% 7%;
+    --dashboard-panel: 222 32% 10%;
+    
+    --rail-background: 222 32% 9%;
+    --rail-foreground: 210 20% 96%;
+    --rail-muted: 215 12% 58%;
+    --rail-active: 0 0% 100%;
+    --rail-active-bg: 0 0% 100% / 0.1;
+    --rail-hover: 0 0% 100% / 0.06;
     
     /* Card colors */
     --card: 222 47% 8%;
@@ -202,6 +219,7 @@ All colors MUST be HSL.
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
     --shadow-glow: 0 0 20px hsl(var(--accent-hue) 65% 50% / 0.4);
+    --hub-shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 10px 24px rgb(0 0 0 / 0.28);
   }
   
   /* Theme variations */
@@ -273,5 +291,17 @@ All colors MUST be HSL.
   
   .text-responsive-4xl {
     font-size: calc(2.25rem * var(--font-scale));
+  }
+
+  .hub-card {
+    border-radius: var(--hub-radius);
+    background: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border: 1px solid hsl(var(--border) / 0.7);
+    box-shadow: var(--hub-shadow);
+  }
+
+  .hub-link {
+    @apply text-sm font-medium text-muted-foreground transition-colors hover:text-foreground;
   }
 }

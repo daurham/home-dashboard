@@ -62,8 +62,21 @@ export interface DashboardConfig {
 }
 
 export const defaultDashboardConfig: DashboardConfig = {
-  defaultTab: 'calendar',
-  visibleTabs: ['calendar', 'expenses', 'latency', 'plants', 'devices', 'cameras', 'security', 'settings', 'ai'],
+  defaultTab: 'home',
+  visibleTabs: [
+    'home',
+    'expenses',
+    'chores',
+    'calendar',
+    'habits',
+    'cameras',
+    'latency',
+    'plants',
+    'devices',
+    'security',
+    'ai',
+    'settings',
+  ],
   sidebarCollapsedByDefault: false,
   clock: {
     enabled: true,
@@ -100,7 +113,7 @@ export const defaultDashboardConfig: DashboardConfig = {
     enabled: false,
     autoRotateTabs: false,
     rotationInterval: 30,
-    allowedTabs: ['calendar', 'devices', 'cameras', 'security'],
+    allowedTabs: ['home', 'calendar', 'devices', 'cameras', 'security'],
     hideSidebar: false,
     hideNavigation: false,
     preventInteraction: false,

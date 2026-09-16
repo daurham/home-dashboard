@@ -1,7 +1,8 @@
+import { Pencil } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { LatencySparkline } from '@/components/latency/LatencySparkline';
 import { cn } from '@/lib/utils';
-import { formatLatency } from '@/lib/latency/format';
+import { describeEndpoint, formatLatency } from '@/lib/latency/format';
 import type { LatencyStatus, LatencyTargetSnapshot } from '@/lib/latency/format';
 
 const DOT: Record<LatencyStatus, string> = {
@@ -18,13 +19,16 @@ const LATENCY_COLOR: Record<LatencyStatus, string> = {
 
 interface LatencyCardProps {
   target: LatencyTargetSnapshot;
+  onSelect?: () => void;
+  /** Only set for targets stored in the database, which are the editable ones. */
+  onEdit?: () => void;
 }
 
-export function LatencyCard({ target }: LatencyCardProps) {
+export function LatencyCard({ target, onSelect, onEdit }: LatencyCardProps) {
   const latencyLabel = formatLatency(target.latencyMs, target.status);
 
-  return (
-    <Card className="border-border/80 bg-card px-4 py-3 shadow-sm">
+  const body = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <span
@@ -32,10 +36,16 @@ export function LatencyCard({ target }: LatencyCardProps) {
             title={target.status}
             aria-label={target.status}
           />
-          <h3 className="truncate text-sm font-medium text-foreground">{target.name}</h3>
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-medium text-foreground">{target.name}</h3>
+            <p className="truncate font-mono text-[10px] text-muted-foreground">{describeEndpoint(target)}</p>
+          </div>
         </div>
         {target.error && target.status === 'down' && (
-          <span className="max-w-[45%] truncate text-[11px] text-muted-foreground" title={target.error}>
+          <span
+            className={cn('max-w-[45%] truncate text-[11px] text-muted-foreground', onEdit && 'mr-6')}
+            title={target.error}
+          >
             {target.error}
           </span>
         )}
@@ -52,6 +62,34 @@ export function LatencyCard({ target }: LatencyCardProps) {
           <LatencySparkline samples={target.samples} status={target.status} />
         </div>
       </div>
+    </>
+  );
+
+  return (
+    <Card className="relative border-border/80 bg-card px-4 py-3 shadow-sm">
+      {onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label={`Edit ${target.name}`}
+          title={`Edit ${target.name}`}
+          className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {onSelect ? (
+        <button
+          type="button"
+          onClick={onSelect}
+          title={`${target.name} — show endpoint and sparkline details`}
+          className="w-full rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {body}
+        </button>
+      ) : (
+        body
+      )}
     </Card>
   );
 }
