@@ -15,7 +15,7 @@ import { HubCard } from '@/components/home/HubCard';
 import { FetchSkeleton } from '@/components/ui/fetch-skeleton';
 import { useLogStore } from '@/lib/store/logStore';
 import { usePreferencesStore } from '@/lib/store';
-import { prependDatedBlock, formatLogDateStamp, insertDateAt } from '@/lib/logs/document';
+import { prependDatedBlock, formatLogDateStamp, insertDateAt } from '@/lib/logDocument';
 import { cn } from '@/lib/utils';
 
 type SaveState = 'saved' | 'dirty' | 'saving' | 'error';
