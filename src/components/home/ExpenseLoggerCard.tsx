@@ -104,7 +104,7 @@ export function ExpenseLoggerCard({ compact = false }: { compact?: boolean }) {
       {!hasLoaded ? (
         <FetchSkeleton lines={compact ? 3 : 4} lineClassName={compact ? 'h-10 rounded-lg' : 'h-14 rounded-xl'} />
       ) : (
-      <div className={cn('grid min-h-0 flex-1 gap-2', compact ? 'grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]' : 'grid-cols-[minmax(0,1fr)_minmax(7.5rem,0.9fr)]')}>
+      <div className={cn('grid min-h-0 flex-1 gap-2', compact ? 'grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]' : 'grid-cols-[minmax(5.5rem,0.9fr)_minmax(0,1.1fr)] xl:grid-cols-[minmax(0,1fr)_minmax(7.5rem,0.9fr)]')}>
         <BudgetDonut
           slices={categoryTotals}
           spentCents={weekTotal}

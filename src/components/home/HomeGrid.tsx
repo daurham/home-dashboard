@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   homeGridTemplateRows,
-  normalizeHomeOrder,
   normalizeHomeScales,
   packHomeLayout,
+  visibleHomeOrder,
   type HomeModuleId,
 } from '@/lib/home/layout';
 import { useHomeLayoutStore } from '@/lib/store/homeLayoutStore';
@@ -16,7 +16,7 @@ function useHomeColumns() {
     const update = () => {
       const width = window.innerWidth;
       if (width < 768) setColumns(1);
-      else if (width < 1280) setColumns(2);
+      else if (width < 1024) setColumns(2);
       else setColumns(3);
     };
     update();
@@ -33,9 +33,10 @@ interface HomeGridProps {
 
 export function HomeGrid({ modules }: HomeGridProps) {
   const order = useHomeLayoutStore((state) => state.order);
+  const hidden = useHomeLayoutStore((state) => state.hidden);
   const scales = useHomeLayoutStore((state) => state.scales);
   const columns = useHomeColumns();
-  const layout = useMemo(() => normalizeHomeOrder(order), [order]);
+  const layout = useMemo(() => visibleHomeOrder(order, hidden), [hidden, order]);
   const normalizedScales = useMemo(() => normalizeHomeScales(scales), [scales]);
   const packed = useMemo(
     () => packHomeLayout(layout, normalizedScales, columns),
@@ -48,7 +49,7 @@ export function HomeGrid({ modules }: HomeGridProps) {
 
   return (
     <div
-      className="grid min-h-0 flex-1 grid-cols-1 gap-2.5 overflow-visible md:overflow-hidden md:grid-cols-2 xl:grid-cols-3"
+      className="grid min-h-0 flex-1 grid-cols-1 gap-2.5 overflow-visible md:overflow-hidden md:grid-cols-2 lg:grid-cols-3"
       style={columns === 1 ? undefined : { gridTemplateRows: rows }}
     >
       {packed.placements.map((placement) => (

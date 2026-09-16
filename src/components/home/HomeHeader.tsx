@@ -55,7 +55,7 @@ export function HomeHeader({ actions }: { actions?: ReactNode }) {
   return (
     <div className="flex shrink-0 items-center justify-between gap-3">
       <div className="min-w-0">
-        <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">
+        <h1 className="truncate text-base font-semibold tracking-tight text-foreground xl:text-lg">
           {greeting}, {greetingName || 'there'} <span aria-hidden>👋</span>
         </h1>
       </div>
@@ -69,7 +69,7 @@ export function HomeHeader({ actions }: { actions?: ReactNode }) {
                 <span className="text-sm font-semibold tabular-nums">
                   {`${weather.temperature}${temperatureUnit}`}
                 </span>
-                <span className="hidden text-[11px] text-muted-foreground sm:inline">{conditionText}</span>
+                <span className="hidden text-[11px] text-muted-foreground xl:inline">{conditionText}</span>
               </>
             ) : (
               <span className="flex items-center gap-1.5" role="status" aria-label="Loading weather">
@@ -82,10 +82,10 @@ export function HomeHeader({ actions }: { actions?: ReactNode }) {
         <div className="flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-2.5 py-1">
           <Clock className="h-3.5 w-3.5 text-muted-foreground" />
           <p className="text-sm font-semibold tabular-nums">
-            {formatTimeFromDate(now, timeFormat, true)}
+            {formatTimeFromDate(now, timeFormat, false)}
           </p>
         </div>
-        <div className="hidden items-center gap-1.5 rounded-full border border-border/70 bg-card px-2.5 py-1 sm:flex">
+        <div className="hidden items-center gap-1.5 rounded-full border border-border/70 bg-card px-2.5 py-1 md:flex">
           <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
           <p className="text-xs font-medium">{formatHeaderDate(now)}</p>
         </div>

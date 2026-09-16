@@ -83,13 +83,13 @@ export function LatencyTrackerCard({ onSynced, compact = false }: { onSynced?: (
         <LatencySparkline
           samples={target.samples}
           status={target.status}
-          className={cn('min-w-0 shrink-0', compact ? 'h-5 w-[38%] max-w-[9rem]' : 'h-7 w-[40%] max-w-[12rem]')}
+          className={cn('min-w-0 shrink-0', compact ? 'h-5 w-[38%] max-w-[9rem]' : 'h-6 w-[4.75rem] lg:h-7 lg:w-[5.75rem] xl:h-7 xl:w-[40%] xl:max-w-[12rem]')}
         />
         <span
           className={cn(
             'shrink-0 text-right font-medium tabular-nums leading-none',
             LATENCY_TEXT[target.status],
-            compact ? 'w-10 text-[10px]' : 'w-14 text-xs',
+            compact ? 'w-10 text-[10px]' : 'w-11 text-[11px] xl:w-14 xl:text-xs',
           )}
         >
           {formatLatency(target.latencyMs, target.status)}

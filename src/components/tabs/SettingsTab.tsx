@@ -29,7 +29,7 @@ const accentColors: Array<{ value: AccentColor; label: string }> = [
 ];
 
 export function SettingsTab() {
-  const { themeMode, accentColor, setThemeMode, setAccentColor } = useThemeStore();
+  const { themeMode, accentColor, darkStartsAt, darkEndsAt, setThemeMode, setAccentColor, setDarkSchedule } = useThemeStore();
   const { config, updateCalendarConfig, updateWeatherConfig } = useDashboardStore();
   const { timeFormat, units, expenseTimeZone, greetingName, householdLabel, householdMembers, setTimeFormat, setUnits, setExpenseTimeZone, setGreetingName, setHouseholdLabel, setHouseholdMembers } = usePreferencesStore();
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -59,11 +59,38 @@ export function SettingsTab() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="auto">Auto (evening / night)</SelectItem>
                     <SelectItem value="light">Light</SelectItem>
                     <SelectItem value="dark">Dark</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Auto dims the kiosk after the evening time, and earlier if the forecast says it is already night.
+                </p>
               </div>
+
+              {themeMode === 'auto' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="dark-starts">Dark from</Label>
+                    <Input
+                      id="dark-starts"
+                      type="time"
+                      value={darkStartsAt}
+                      onChange={(e) => setDarkSchedule(e.target.value || '20:00', darkEndsAt)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dark-ends">Light from</Label>
+                    <Input
+                      id="dark-ends"
+                      type="time"
+                      value={darkEndsAt}
+                      onChange={(e) => setDarkSchedule(darkStartsAt, e.target.value || '07:00')}
+                    />
+                  </div>
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label htmlFor="accent-color">Accent Color</Label>
@@ -115,7 +142,7 @@ export function SettingsTab() {
                   value={householdMembers.join(', ')}
                   onChange={(e) => {
                     const members = e.target.value.split(',').map((part) => part.trim()).filter(Boolean);
-                    setHouseholdMembers(members.length ? members : ['Jake']);
+                    setHouseholdMembers(members.length ? members : ['Jake', 'Bo']);
                   }}
                 />
                 <p className="text-xs text-muted-foreground">

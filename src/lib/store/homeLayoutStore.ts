@@ -1,18 +1,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
+  DEFAULT_HIDDEN_HOME_MODULES,
   DEFAULT_HOME_ORDER,
   DEFAULT_HOME_SCALES,
   HOME_MODULES,
   moveItem,
   normalizeHomeOrder,
   normalizeHomeScales,
+  visibleHomeOrder,
+  withDefaultHiddenModules,
   type HomeModuleId,
   type HomeModuleScale,
 } from '@/lib/home/layout';
 
 interface HomeLayoutState {
   order: HomeModuleId[];
+  hidden: HomeModuleId[];
   scales: Record<HomeModuleId, HomeModuleScale>;
   editing: boolean;
   setEditing: (editing: boolean) => void;
@@ -21,6 +25,8 @@ interface HomeLayoutState {
   setModuleScale: (id: HomeModuleId, scale: HomeModuleScale) => void;
   toggleModuleScale: (id: HomeModuleId) => void;
   toggleModuleWide: (id: HomeModuleId) => void;
+  hideModule: (id: HomeModuleId) => void;
+  showModule: (id: HomeModuleId) => void;
   resetLayout: () => void;
 }
 
@@ -28,6 +34,7 @@ export const useHomeLayoutStore = create<HomeLayoutState>()(
   persist(
     (set, get) => ({
       order: DEFAULT_HOME_ORDER,
+      hidden: [...DEFAULT_HIDDEN_HOME_MODULES],
       scales: DEFAULT_HOME_SCALES,
       editing: false,
       setEditing: (editing) => set({ editing }),
@@ -35,11 +42,11 @@ export const useHomeLayoutStore = create<HomeLayoutState>()(
         set({ order: moveItem(get().order, fromId, toId) });
       },
       nudgeModule: (id, direction) => {
-        const order = get().order;
-        const index = order.indexOf(id);
-        const target = order[index + direction];
+        const visible = visibleHomeOrder(get().order, get().hidden);
+        const index = visible.indexOf(id);
+        const target = visible[index + direction];
         if (!target) return;
-        set({ order: moveItem(order, id, target) });
+        set({ order: moveItem(get().order, id, target) });
       },
       setModuleScale: (id, scale) => {
         if (!HOME_MODULES[id].canResize) return;
@@ -67,17 +74,30 @@ export const useHomeLayoutStore = create<HomeLayoutState>()(
           },
         });
       },
-      resetLayout: () => set({ order: DEFAULT_HOME_ORDER, scales: DEFAULT_HOME_SCALES }),
+      hideModule: (id) => {
+        const hidden = get().hidden;
+        if (hidden.includes(id)) return;
+        set({ hidden: [...hidden, id] });
+      },
+      showModule: (id) => {
+        set({ hidden: get().hidden.filter((moduleId) => moduleId !== id) });
+      },
+      resetLayout: () => set({
+        order: DEFAULT_HOME_ORDER,
+        hidden: [...DEFAULT_HIDDEN_HOME_MODULES],
+        scales: DEFAULT_HOME_SCALES,
+      }),
     }),
     {
       name: 'home-layout-storage',
-      partialize: (state) => ({ order: state.order, scales: state.scales }),
+      partialize: (state) => ({ order: state.order, hidden: state.hidden, scales: state.scales }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<HomeLayoutState> | undefined;
         return {
           ...currentState,
           ...persisted,
           order: normalizeHomeOrder(persisted?.order),
+          hidden: withDefaultHiddenModules(persisted?.order, persisted?.hidden),
           scales: normalizeHomeScales(persisted?.scales),
           editing: false,
         };

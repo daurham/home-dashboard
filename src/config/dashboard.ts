@@ -76,6 +76,7 @@ export const defaultDashboardConfig: DashboardConfig = {
     'cameras',
     'files',
     'logs',
+    'savings',
     'latency',
     'plants',
     'devices',

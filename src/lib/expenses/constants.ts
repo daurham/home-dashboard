@@ -6,7 +6,7 @@ export const DEFAULT_WEEKLY_BUDGET_CENTS = 15000;
 
 export const PAID_BY_OPTIONS = [
   { value: 'Jake', label: 'Jake' },
-  { value: 'Wife', label: 'Wife' },
+  { value: 'Bo', label: 'Bo' },
   { value: 'Both', label: 'Both' },
 ] as const;
 

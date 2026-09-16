@@ -52,6 +52,66 @@ export function canUploadFile(file: File, remainingBytes: number): string | null
   return null;
 }
 
+const PREVIEWABLE_IMAGE_MIME = /^(image\/(avif|bmp|gif|heic|heif|jpeg|jpg|pjpeg|png|svg\+xml|webp))$/i;
+const PREVIEWABLE_IMAGE_EXT = /\.(avif|bmp|gif|heic|heif|jpe?g|png|svg|webp)$/i;
+
+export function isPreviewableImage(file: { mimeType?: string; originalName?: string }): boolean {
+  if (file.mimeType && PREVIEWABLE_IMAGE_MIME.test(file.mimeType)) return true;
+  return PREVIEWABLE_IMAGE_EXT.test(file.originalName ?? '');
+}
+
+const COPYABLE_TEXT_MIME = /^(text\/|application\/(json|xml|yaml|x-yaml|javascript|sql))/i;
+const COPYABLE_TEXT_EXT = /\.(txt|md|csv|json|log|html|xml|ya?ml|js|ts|css|env|ini|conf)$/i;
+const TEXT_COPY_LIMIT_BYTES = 1_000_000;
+const CLIPBOARD_IMAGE_MIME = /^(image\/(gif|jpeg|jpg|pjpeg|png|webp))$/i;
+const CLIPBOARD_IMAGE_EXT = /\.(gif|jpe?g|png|webp)$/i;
+
+export function isCopyableText(file: { mimeType?: string; originalName?: string; sizeBytes?: number }): boolean {
+  if ((file.sizeBytes ?? 0) > TEXT_COPY_LIMIT_BYTES) return false;
+  if (file.mimeType && COPYABLE_TEXT_MIME.test(file.mimeType)) return true;
+  return COPYABLE_TEXT_EXT.test(file.originalName ?? '');
+}
+
+export function isClipboardImage(file: { mimeType?: string; originalName?: string }): boolean {
+  if (file.mimeType && CLIPBOARD_IMAGE_MIME.test(file.mimeType)) return true;
+  return CLIPBOARD_IMAGE_EXT.test(file.originalName ?? '');
+}
+
+export function sharedFileUrl(id: string): string {
+  const path = filesApi.downloadUrl(id);
+  if (typeof window === 'undefined') return path;
+  return new URL(path, window.location.href).toString();
+}
+
+export async function copySharedFile(file: SharedFile): Promise<'text' | 'image' | 'link'> {
+  const url = filesApi.downloadUrl(file.id);
+  const link = sharedFileUrl(file.id);
+
+  if (isCopyableText(file)) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Could not read file');
+    await navigator.clipboard.writeText(await response.text());
+    return 'text';
+  }
+
+  if (isClipboardImage(file) && typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Could not read file');
+      const blob = await response.blob();
+      const type = CLIPBOARD_IMAGE_MIME.test(blob.type) ? blob.type : 'image/png';
+      await navigator.clipboard.write([new ClipboardItem({ [type]: blob })]);
+      return 'image';
+    } catch {
+      await navigator.clipboard.writeText(link);
+      return 'link';
+    }
+  }
+
+  await navigator.clipboard.writeText(link);
+  return 'link';
+}
+
 export const useFileShareStore = create<FileShareState>()((set, get) => ({
   files: [],
   ...emptyUsage(),

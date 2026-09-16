@@ -130,15 +130,15 @@ export function RecurringChoresCard({ compact = false }: { compact?: boolean }) 
           <p className="text-xs text-muted-foreground">All caught up — nothing due this week.</p>
         </div>
       ) : (
-        <ul className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden">
+        <ul className="flex min-h-0 flex-1 flex-col justify-start gap-1 overflow-y-auto">
           {visible.map(({ chore, status }) => {
             const Icon = CHORE_ICONS[chore.icon];
             return (
-              <li key={chore.id} className="min-h-0 max-h-14 flex-1">
+              <li key={chore.id} className="min-h-0 shrink-0">
                 <button
                   type="button"
                   onClick={() => toggleComplete(chore.id)}
-                  className="flex h-full min-h-0 w-full items-center gap-2 rounded-lg px-0.5 py-1 text-left hover:bg-muted/50"
+                  className="flex h-11 w-full items-center gap-2 rounded-lg px-0.5 py-1 text-left hover:bg-muted/50"
                 >
                   <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-full', CHORE_ICON_COLORS[chore.icon])}>
                     <Icon className="h-4 w-4" />

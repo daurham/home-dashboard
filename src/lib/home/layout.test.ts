@@ -1,4 +1,5 @@
 import {
+  DEFAULT_HIDDEN_HOME_MODULES,
   DEFAULT_HOME_ORDER,
   DEFAULT_HOME_SCALES,
   HOME_MODULES,
@@ -6,6 +7,8 @@ import {
   moveItem,
   normalizeHomeOrder,
   packHomeLayout,
+  visibleHomeOrder,
+  withDefaultHiddenModules,
 } from './layout';
 import type { HomeModuleId } from './layout';
 import { describe, expect, it } from 'vitest';
@@ -16,11 +19,40 @@ describe('normalizeHomeOrder', () => {
       'chores',
       'stats',
       'expenses',
+      'savings',
       'habits',
       'calendar',
       'latency',
       'cameras',
     ]);
+  });
+});
+
+describe('visibleHomeOrder', () => {
+  it('keeps layout order while omitting hidden modules', () => {
+    expect(visibleHomeOrder(['chores', 'stats'] as HomeModuleId[], ['stats', 'cameras'])).toEqual([
+      'chores',
+      'expenses',
+      'savings',
+      'habits',
+      'calendar',
+      'latency',
+    ]);
+  });
+
+  it('keeps savings off the home grid until it is added back', () => {
+    expect(DEFAULT_HIDDEN_HOME_MODULES).toEqual(['savings']);
+    expect(visibleHomeOrder(DEFAULT_HOME_ORDER, DEFAULT_HIDDEN_HOME_MODULES)).not.toContain('savings');
+  });
+});
+
+describe('withDefaultHiddenModules', () => {
+  it('hides savings for layouts that never had the module', () => {
+    expect(withDefaultHiddenModules(['stats', 'expenses'], [])).toEqual(['savings']);
+  });
+
+  it('does not re-hide savings once the saved layout already knows it', () => {
+    expect(withDefaultHiddenModules(['stats', 'savings'], [])).toEqual([]);
   });
 });
 
@@ -36,7 +68,11 @@ describe('moveItem', () => {
 
 describe('packHomeLayout', () => {
   it('places a full-width overview then two rows of full tiles', () => {
-    const packed = packHomeLayout(DEFAULT_HOME_ORDER, DEFAULT_HOME_SCALES, 3);
+    const packed = packHomeLayout(
+      visibleHomeOrder(DEFAULT_HOME_ORDER, DEFAULT_HIDDEN_HOME_MODULES),
+      DEFAULT_HOME_SCALES,
+      3,
+    );
     expect(packed.rowCount).toBe(5);
     expect(homeGridTemplateRows(packed.placements, packed.rowCount)).toBe(
       'auto minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)',

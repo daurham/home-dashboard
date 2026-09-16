@@ -71,7 +71,7 @@ export function ExpenseFormSheet({
     if (!open) return;
     setAmountText(expense ? centsToInput(expense.amountCents) : '');
     setCategoryId(expense?.categoryId || '');
-    setPaidBy(expense?.paidBy || null);
+    setPaidBy(expense?.paidBy === 'Wife' ? 'Bo' : expense?.paidBy || null);
     setNote(expense?.note || '');
     setOccurredOn(expense?.occurredOn || todayYmd(timeZone));
     setShowMore(Boolean(expense?.note || (expense && expense.occurredOn !== todayYmd(timeZone))));

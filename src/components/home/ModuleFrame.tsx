@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronUp, Columns2, GripVertical, Maximize2, Minimize2 } from 'lucide-react';
-import { HOME_MODULES, type HomeModuleId } from '@/lib/home/layout';
+import { ChevronDown, ChevronUp, Columns2, EyeOff, GripVertical, Maximize2, Minimize2 } from 'lucide-react';
+import { HOME_MODULES, visibleHomeOrder, type HomeModuleId } from '@/lib/home/layout';
 import { useHomeLayoutStore } from '@/lib/store/homeLayoutStore';
 import { cn } from '@/lib/utils';
 
@@ -32,15 +32,18 @@ export function ModuleFrame({
   const nudgeModule = useHomeLayoutStore((state) => state.nudgeModule);
   const toggleModuleScale = useHomeLayoutStore((state) => state.toggleModuleScale);
   const toggleModuleWide = useHomeLayoutStore((state) => state.toggleModuleWide);
+  const hideModule = useHomeLayoutStore((state) => state.hideModule);
   const order = useHomeLayoutStore((state) => state.order);
-  const index = order.indexOf(id);
+  const hidden = useHomeLayoutStore((state) => state.hidden);
+  const visible = visibleHomeOrder(order, hidden);
+  const index = visible.indexOf(id);
   const [over, setOver] = useState(false);
   const meta = HOME_MODULES[id];
   const controlPad = meta.canWiden
-    ? '[&_.hub-card]:pl-[9.25rem]'
+    ? '[&_.hub-card]:pl-[11.5rem]'
     : meta.canResize
-      ? '[&_.hub-card]:pl-[7.25rem]'
-      : '[&_.hub-card]:pl-[5.75rem]';
+      ? '[&_.hub-card]:pl-[9.5rem]'
+      : '[&_.hub-card]:pl-[8rem]';
 
   return (
     <section
@@ -108,10 +111,19 @@ export function ModuleFrame({
               type="button"
               className="inline-flex h-7 w-6 items-center justify-center rounded-md border border-border/80 bg-card/95 text-muted-foreground shadow-sm disabled:opacity-30"
               aria-label={`Move ${meta.title} later`}
-              disabled={index < 0 || index >= order.length - 1}
+              disabled={index < 0 || index >= visible.length - 1}
               onClick={() => nudgeModule(id, 1)}
             >
               <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border/80 bg-card/95 text-muted-foreground shadow-sm"
+              aria-label={`Hide ${meta.title} from home`}
+              title="Hide from home"
+              onClick={() => hideModule(id)}
+            >
+              <EyeOff className="h-3.5 w-3.5" />
             </button>
             {meta.canResize && (
               <button

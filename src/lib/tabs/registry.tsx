@@ -6,6 +6,7 @@ import {
   Home,
   Leaf,
   NotebookPen,
+  PiggyBank,
   Settings,
   Shield,
   Sparkles,
@@ -31,6 +32,7 @@ import {
   HabitsTab,
   FilesTab,
   LogsTab,
+  SavingsTab,
 } from '@/components/tabs';
 
 export interface TabDefinition {
@@ -117,11 +119,19 @@ export const TABS: TabDefinition[] = [
     pin: 'overflow',
   },
   {
+    id: 'savings',
+    name: 'Savings',
+    component: SavingsTab,
+    icon: PiggyBank,
+    order: 9,
+    pin: 'overflow',
+  },
+  {
     id: 'latency',
     name: 'Latency',
     component: LatencySparklinesTab,
     icon: Activity,
-    order: 9,
+    order: 10,
     pin: 'overflow',
   },
   {
@@ -129,7 +139,7 @@ export const TABS: TabDefinition[] = [
     name: 'Plants',
     component: PlantsTab,
     icon: Leaf,
-    order: 10,
+    order: 11,
     pin: 'overflow',
   },
   {
@@ -137,7 +147,7 @@ export const TABS: TabDefinition[] = [
     name: 'Devices',
     component: DevicesTab,
     icon: Cpu,
-    order: 11,
+    order: 12,
     pin: 'overflow',
   },
   {
@@ -145,7 +155,7 @@ export const TABS: TabDefinition[] = [
     name: 'Security',
     component: SecurityTab,
     icon: Shield,
-    order: 12,
+    order: 13,
     pin: 'overflow',
   },
   {
@@ -153,7 +163,7 @@ export const TABS: TabDefinition[] = [
     name: 'AI',
     component: AITab,
     icon: Sparkles,
-    order: 13,
+    order: 14,
     pin: 'overflow',
   },
   {
@@ -161,7 +171,7 @@ export const TABS: TabDefinition[] = [
     name: 'Settings',
     component: SettingsTab,
     icon: Settings,
-    order: 14,
+    order: 15,
     pin: 'footer',
   },
 ];

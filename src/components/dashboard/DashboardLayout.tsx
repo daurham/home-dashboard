@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { Sidebar } from './Sidebar';
-import { RightSidebar } from './RightSidebar';
 import { EventModal } from './Modals/EventModal';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useChoreStore, useFileShareStore, useHabitStore, useUIStore } from '@/lib/store';
@@ -13,15 +12,12 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-const HUB_TABS = new Set(['home', 'expenses', 'chores', 'habits', 'latency', 'ai', 'files', 'logs']);
-
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isMobile = useIsMobile();
-  const { sidebarCollapsed, setSidebarCollapsed, rightSidebarCollapsed, setRightSidebarCollapsed, activeSidebarTab } = useUIStore();
+  const { sidebarCollapsed, setSidebarCollapsed, activeSidebarTab } = useUIStore();
   const loadChores = useChoreStore((s) => s.load);
   const loadHabits = useHabitStore((s) => s.load);
   const loadFiles = useFileShareStore((s) => s.load);
-  const hideRightSidebar = HUB_TABS.has(activeSidebarTab);
   const isHome = activeSidebarTab === 'home';
 
   useEffect(() => {
@@ -33,31 +29,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className={cn(
       'flex w-full bg-dashboard-bg flex-col md:flex-row',
-      isHome ? 'h-screen overflow-hidden' : 'min-h-screen',
+      isHome ? 'h-dvh overflow-hidden' : 'min-h-dvh',
     )}>
       {isMobile && (
-        <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-rail md:hidden">
-          <div className="flex h-14 items-center justify-between px-4">
+        <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-rail pt-[env(safe-area-inset-top)] md:hidden">
+          <div className="flex h-14 items-center gap-3 px-4">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="text-white hover:bg-white/10"
+              className="touch-manipulation text-white hover:bg-white/10"
             >
               <Menu className="h-5 w-5" />
             </Button>
             <h2 className="text-lg font-semibold text-white">
               {getTabById(activeSidebarTab)?.name ?? 'Home'}
             </h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
-              className="text-white hover:bg-white/10"
-              disabled={hideRightSidebar}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
           </div>
         </header>
       )}
@@ -65,7 +52,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <Sidebar />
 
       <main className={cn(
-        'flex-1 min-h-0 min-w-0',
+        'relative z-0 min-h-0 min-w-0 flex-1',
         isHome && !isMobile ? 'overflow-hidden' : 'overflow-y-auto',
       )}>
         <div
@@ -79,8 +66,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {children}
         </div>
       </main>
-
-      {!hideRightSidebar && <RightSidebar />}
 
       <EventModal />
     </div>

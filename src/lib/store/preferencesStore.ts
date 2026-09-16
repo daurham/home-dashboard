@@ -5,6 +5,16 @@ import { DEFAULT_EXPENSE_TIMEZONE } from '@/lib/expenses/weekRange';
 export type TimeFormat = '12-hour' | '24-hour';
 export type Units = 'metric' | 'imperial';
 
+export const DEFAULT_HOUSEHOLD_LABEL = 'Daurham Household';
+export const DEFAULT_HOUSEHOLD_MEMBERS = ['Jake', 'Bo'];
+const LEGACY_HOUSEHOLD_LABELS = new Set(['Jake & household', 'Jake & Wife']);
+const LEGACY_HOUSEHOLD_MEMBERS = ['Jake', 'Wife'];
+
+function sameMembers(a: string[] | undefined, b: string[]): boolean {
+  if (!a || a.length !== b.length) return false;
+  return a.every((name, index) => name === b[index]);
+}
+
 interface PreferencesState {
   timeFormat: TimeFormat;
   units: Units;
@@ -27,8 +37,8 @@ export const usePreferencesStore = create<PreferencesState>()(
       units: 'imperial',
       expenseTimeZone: DEFAULT_EXPENSE_TIMEZONE,
       greetingName: 'Jake',
-      householdLabel: 'Daurham Household',
-      householdMembers: ['Jake', 'Wife'],
+      householdLabel: DEFAULT_HOUSEHOLD_LABEL,
+      householdMembers: DEFAULT_HOUSEHOLD_MEMBERS,
       setTimeFormat: (format) => set({ timeFormat: format }),
       setUnits: (units) => set({ units }),
       setExpenseTimeZone: (expenseTimeZone) => set({ expenseTimeZone }),
@@ -40,6 +50,8 @@ export const usePreferencesStore = create<PreferencesState>()(
       name: 'preferences-storage',
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<PreferencesState> | undefined;
+        const persistedLabel = persisted?.householdLabel?.trim();
+        const persistedMembers = persisted?.householdMembers;
         return {
           ...currentState,
           ...persisted,
@@ -48,13 +60,16 @@ export const usePreferencesStore = create<PreferencesState>()(
               ? DEFAULT_EXPENSE_TIMEZONE
               : persisted.expenseTimeZone,
           greetingName: persisted?.greetingName || 'Jake',
-          householdLabel: persisted?.householdLabel || 'Jake & household',
-          householdMembers: persisted?.householdMembers?.length
-            ? persisted.householdMembers
-            : ['Jake', 'Wife'],
+          householdLabel:
+            !persistedLabel || LEGACY_HOUSEHOLD_LABELS.has(persistedLabel)
+              ? DEFAULT_HOUSEHOLD_LABEL
+              : persistedLabel,
+          householdMembers:
+            !persistedMembers?.length || sameMembers(persistedMembers, LEGACY_HOUSEHOLD_MEMBERS)
+              ? DEFAULT_HOUSEHOLD_MEMBERS
+              : persistedMembers,
         };
       },
     }
   )
 );
-

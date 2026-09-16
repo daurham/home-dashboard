@@ -12,11 +12,12 @@ export function dollarsToCents(value: number): number {
 }
 
 /** Parse a typed amount like "12.5" or "$12.50" into cents. */
-export function parseAmountToCents(raw: string): number | null {
+export function parseAmountToCents(raw: string, options?: { allowZero?: boolean }): number | null {
   const cleaned = raw.replace(/[^0-9.]/g, '');
   if (!cleaned || cleaned === '.') return null;
   const n = Number(cleaned);
-  if (!Number.isFinite(n) || n <= 0) return null;
+  if (!Number.isFinite(n) || n < 0) return null;
+  if (n === 0) return options?.allowZero ? 0 : null;
   return dollarsToCents(n);
 }
 

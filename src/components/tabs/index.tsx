@@ -12,3 +12,4 @@ export { ChoresTab } from './ChoresTab';
 export { HabitsTab } from './HabitsTab';
 export { FilesTab } from './FilesTab';
 export { LogsTab } from './LogsTab';
+export { SavingsTab } from './SavingsTab';

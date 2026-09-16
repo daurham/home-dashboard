@@ -6,6 +6,7 @@ describe('parseAmountToCents', () => {
     expect(parseAmountToCents('12.50')).toBe(1250);
     expect(parseAmountToCents('$8')).toBe(800);
     expect(parseAmountToCents('0')).toBe(null);
+    expect(parseAmountToCents('0', { allowZero: true })).toBe(0);
     expect(parseAmountToCents('')).toBe(null);
   });
 });

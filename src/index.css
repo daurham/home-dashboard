@@ -253,6 +253,15 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     font-size: calc(1rem * var(--font-scale));
   }
+
+  html.theme-auto,
+  html.theme-auto body,
+  html.theme-auto .bg-dashboard-bg,
+  html.theme-auto .hub-card,
+  html.theme-auto .bg-card,
+  html.theme-auto .bg-background {
+    transition: background-color 1.2s ease, color 0.9s ease, border-color 1s ease, box-shadow 1s ease;
+  }
   
   /* Utility classes for responsive scaling */
   .touch-target {

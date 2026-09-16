@@ -101,7 +101,7 @@ export function MonthCalendarCard({ compact = false, wide = false }: { compact?:
     return mergeChoresIntoEvents(events, chores, start, end);
   }, [chores, compact, events, weeks]);
   const agenda = useMemo(
-    () => upcomingFrom(new Date(), visibleEvents, wide ? 8 : compact ? 3 : 4),
+    () => upcomingFrom(new Date(), visibleEvents, wide ? 8 : compact ? 3 : 3),
     [compact, visibleEvents, wide],
   );
   const gridDays = useMemo(() => weeks.flat(), [weeks]);
@@ -237,7 +237,7 @@ export function MonthCalendarCard({ compact = false, wide = false }: { compact?:
               <span
                 className={cn(
                   'flex items-center justify-center rounded-full',
-                  wide ? 'h-8 w-8 text-sm' : 'h-6 w-6 text-[12px]',
+                  wide ? 'h-8 w-8 text-sm' : 'h-5 w-5 text-[11px] [@media(min-height:900px)]:h-6 [@media(min-height:900px)]:w-6 [@media(min-height:900px)]:text-[12px]',
                   isToday(day) && 'bg-foreground text-background',
                   selected && wide && !isToday(day) && 'ring-1 ring-foreground/40',
                 )}

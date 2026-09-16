@@ -1,6 +1,7 @@
 export type HomeModuleId =
   | 'stats'
   | 'expenses'
+  | 'savings'
   | 'chores'
   | 'habits'
   | 'calendar'
@@ -21,6 +22,7 @@ export interface HomeModuleMeta {
 export const HOME_MODULES: Record<HomeModuleId, HomeModuleMeta> = {
   stats: { id: 'stats', title: 'Overview', role: 'banner', canResize: true, canWiden: false },
   expenses: { id: 'expenses', title: 'Expense Logger', role: 'tile', canResize: true, canWiden: false },
+  savings: { id: 'savings', title: 'Savings', role: 'tile', canResize: true, canWiden: false },
   chores: { id: 'chores', title: 'Recurring Chores', role: 'tile', canResize: true, canWiden: false },
   habits: { id: 'habits', title: 'Habit Tracker', role: 'tile', canResize: true, canWiden: false },
   calendar: { id: 'calendar', title: 'Calendar', role: 'tile', canResize: true, canWiden: true },
@@ -31,6 +33,7 @@ export const HOME_MODULES: Record<HomeModuleId, HomeModuleMeta> = {
 export const DEFAULT_HOME_ORDER: HomeModuleId[] = [
   'stats',
   'expenses',
+  'savings',
   'chores',
   'habits',
   'calendar',
@@ -41,12 +44,15 @@ export const DEFAULT_HOME_ORDER: HomeModuleId[] = [
 export const DEFAULT_HOME_SCALES: Record<HomeModuleId, HomeModuleScale> = {
   stats: 'full',
   expenses: 'full',
+  savings: 'full',
   chores: 'full',
   habits: 'full',
   calendar: 'full',
   latency: 'full',
   cameras: 'full',
 };
+
+export const DEFAULT_HIDDEN_HOME_MODULES: HomeModuleId[] = ['savings'];
 
 const ALL_IDS = new Set<HomeModuleId>(DEFAULT_HOME_ORDER);
 
@@ -62,6 +68,38 @@ export function normalizeHomeOrder(order: HomeModuleId[] | undefined): HomeModul
     if (!seen.has(id)) next.push(id);
   }
   return next;
+}
+
+export function normalizeHiddenModules(hidden: HomeModuleId[] | undefined): HomeModuleId[] {
+  const seen = new Set<HomeModuleId>();
+  const next: HomeModuleId[] = [];
+  for (const id of hidden ?? []) {
+    if (!ALL_IDS.has(id) || seen.has(id)) continue;
+    seen.add(id);
+    next.push(id);
+  }
+  return next;
+}
+
+/** Hide newly introduced modules until the user adds them back from Customize. */
+export function withDefaultHiddenModules(
+  persistedOrder: HomeModuleId[] | undefined,
+  persistedHidden: HomeModuleId[] | undefined,
+): HomeModuleId[] {
+  const hidden = normalizeHiddenModules(persistedHidden);
+  const known = new Set(persistedOrder ?? []);
+  for (const id of DEFAULT_HIDDEN_HOME_MODULES) {
+    if (!known.has(id) && !hidden.includes(id)) hidden.push(id);
+  }
+  return hidden;
+}
+
+export function visibleHomeOrder(
+  order: HomeModuleId[] | undefined,
+  hidden: HomeModuleId[] | undefined,
+): HomeModuleId[] {
+  const hiddenSet = new Set(normalizeHiddenModules(hidden));
+  return normalizeHomeOrder(order).filter((id) => !hiddenSet.has(id));
 }
 
 export function normalizeHomeScales(

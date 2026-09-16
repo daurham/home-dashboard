@@ -41,7 +41,7 @@ export function StatCards({
     return (
       <HubCard className={compact ? 'p-1.5' : 'p-3'}>
         <div
-          className={cn('grid h-full gap-1', compact ? 'grid-cols-2 xl:grid-cols-4' : 'grid-cols-2 xl:grid-cols-4 gap-2')}
+          className={cn('grid h-full gap-1', compact ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-2 lg:grid-cols-4 gap-2')}
           role="status"
           aria-label="Loading overview"
         >
@@ -62,7 +62,7 @@ export function StatCards({
 
     return (
       <HubCard className="p-1.5">
-        <div className="grid h-full grid-cols-2 gap-1 xl:grid-cols-4">
+        <div className="grid h-full grid-cols-2 gap-1 lg:grid-cols-4">
           <button
             type="button"
             className="min-w-0 rounded-lg border-l-[3px] border-emerald-500 bg-emerald-500/5 px-2 py-1 text-left hover:bg-emerald-500/10"
@@ -132,7 +132,7 @@ export function StatCards({
 
   return (
     <HubCard className="p-2">
-      <div className="grid h-full grid-cols-2 gap-2 xl:grid-cols-4">
+      <div className="grid h-full grid-cols-2 gap-2 lg:grid-cols-4">
         <button type="button" className="min-w-0 rounded-xl px-2 py-1.5 text-left hover:bg-muted/50" onClick={() => setActiveSidebarTab('expenses')}>
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300">

@@ -1,16 +1,60 @@
 import { useEffect, useRef, useState } from 'react';
-import { Download, FolderUp, Trash2, Upload } from 'lucide-react';
+import { Copy, Download, FileText, FolderUp, Trash2, Upload } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { HubCard } from '@/components/home/HubCard';
 import { FetchSkeleton } from '@/components/ui/fetch-skeleton';
-import { filesApi } from '@/services/apiService';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { filesApi, type SharedFile } from '@/services/apiService';
 import {
   canUploadFile,
+  copySharedFile,
   formatBytes,
+  isPreviewableImage,
   useFileShareStore,
 } from '@/lib/store/fileShareStore';
 import { cn } from '@/lib/utils';
+
+function FileThumb({
+  file,
+  className,
+}: {
+  file: SharedFile;
+  className?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  const previewable = isPreviewableImage(file) && !failed;
+
+  if (!previewable) {
+    return (
+      <span
+        className={cn(
+          'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-muted text-muted-foreground',
+          className,
+        )}
+        aria-hidden
+      >
+        <FileText className="h-5 w-5" />
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={filesApi.downloadUrl(file.id)}
+      alt=""
+      className={cn('h-12 w-12 shrink-0 rounded-lg border border-border/70 object-cover bg-muted', className)}
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 export function FilesTab() {
   const files = useFileShareStore((s) => s.files);
@@ -26,6 +70,8 @@ export function FilesTab() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<SharedFile | null>(null);
+  const [copyingId, setCopyingId] = useState<string | null>(null);
 
   useEffect(() => {
     void load();
@@ -44,6 +90,19 @@ export function FilesTab() {
         return;
       }
       await upload(file);
+    }
+  };
+
+  const copyFile = async (file: SharedFile) => {
+    if (copyingId) return;
+    setCopyingId(file.id);
+    try {
+      const kind = await copySharedFile(file);
+      toast.success(kind === 'text' ? 'Copied text' : kind === 'image' ? 'Copied image' : 'Copied link');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not copy');
+    } finally {
+      setCopyingId(null);
     }
   };
 
@@ -111,40 +170,108 @@ export function FilesTab() {
           </div>
         ) : (
           <ul className="divide-y divide-border/70">
-            {files.map((file) => (
-              <li key={file.id} className="flex items-center gap-3 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{file.originalName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatBytes(file.sizeBytes)}
-                    {file.createdAt ? ` · ${new Date(file.createdAt).toLocaleString()}` : ''}
-                  </p>
-                </div>
-                <a
-                  href={filesApi.downloadUrl(file.id)}
-                  className="inline-flex h-9 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium hover:bg-accent"
-                >
-                  <Download className="h-4 w-4" />
-                  Download
-                </a>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Delete ${file.originalName}`}
-                  onClick={() => {
-                    if (window.confirm(`Delete ${file.originalName}? This frees ${formatBytes(file.sizeBytes)}.`)) {
-                      void remove(file.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </li>
-            ))}
+            {files.map((file) => {
+              const canPreview = isPreviewableImage(file);
+              return (
+                <li key={file.id} className="flex items-center gap-3 py-2.5">
+                  {canPreview ? (
+                    <button
+                      type="button"
+                      className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => setPreview(file)}
+                      aria-label={`Preview ${file.originalName}`}
+                    >
+                      <FileThumb file={file} />
+                    </button>
+                  ) : (
+                    <FileThumb file={file} />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    {canPreview ? (
+                      <button
+                        type="button"
+                        className="block max-w-full truncate text-left font-medium hover:underline"
+                        onClick={() => setPreview(file)}
+                      >
+                        {file.originalName}
+                      </button>
+                    ) : (
+                      <p className="truncate font-medium">{file.originalName}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {formatBytes(file.sizeBytes)}
+                      {file.createdAt ? ` · ${new Date(file.createdAt).toLocaleString()}` : ''}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="inline-flex h-9 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium hover:bg-accent disabled:opacity-50"
+                    onClick={() => void copyFile(file)}
+                    disabled={copyingId === file.id}
+                  >
+                    <Copy className="h-4 w-4" />
+                    {copyingId === file.id ? 'Copying…' : 'Copy'}
+                  </button>
+                  <a
+                    href={filesApi.downloadUrl(file.id)}
+                    className="inline-flex h-9 items-center justify-center gap-1 rounded-md px-3 text-sm font-medium hover:bg-accent"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download
+                  </a>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Delete ${file.originalName}`}
+                    onClick={() => {
+                      if (window.confirm(`Delete ${file.originalName}? This frees ${formatBytes(file.sizeBytes)}.`)) {
+                        void remove(file.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </HubCard>
+
+      <Dialog open={Boolean(preview)} onOpenChange={(open) => { if (!open) setPreview(null); }}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="truncate pr-8">{preview?.originalName ?? 'Preview'}</DialogTitle>
+            <DialogDescription>
+              {preview ? `${formatBytes(preview.sizeBytes)}${preview.createdAt ? ` · ${new Date(preview.createdAt).toLocaleString()}` : ''}` : 'Shared file preview'}
+            </DialogDescription>
+          </DialogHeader>
+          {preview && (
+            <div className="space-y-3">
+              <div className="flex max-h-[70vh] items-center justify-center overflow-hidden rounded-xl bg-muted">
+                <img
+                  src={filesApi.downloadUrl(preview.id)}
+                  alt={preview.originalName}
+                  className="max-h-[70vh] w-full object-contain"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => void copyFile(preview)} disabled={copyingId === preview.id}>
+                  <Copy className="h-4 w-4" />
+                  {copyingId === preview.id ? 'Copying…' : 'Copy'}
+                </Button>
+                <Button asChild>
+                  <a href={filesApi.downloadUrl(preview.id)} download={preview.originalName}>
+                    <Download className="h-4 w-4" />
+                    Download
+                  </a>
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

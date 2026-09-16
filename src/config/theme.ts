@@ -17,7 +17,7 @@ export interface ThemeConfig {
 }
 
 export const defaultThemeConfig: ThemeConfig = {
-  defaultMode: 'light',
+    defaultMode: 'auto',
   defaultAccentColor: 'teal',
   availableAccentColors: ['teal', 'blue', 'green', 'orange', 'purple'],
   allowThemeToggle: true,

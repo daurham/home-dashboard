@@ -15,6 +15,7 @@ export type SidebarTab =
   | 'ai'
   | 'files'
   | 'logs'
+  | 'savings'
   | 'settings';
 
 interface UIState {

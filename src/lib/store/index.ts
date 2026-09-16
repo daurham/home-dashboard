@@ -16,6 +16,7 @@ export { useHabitStore } from './habitStore';
 export { useFileShareStore } from './fileShareStore';
 export { useLogStore } from './logStore';
 export { useHomeLayoutStore } from './homeLayoutStore';
+export { useSavingsStore } from './savingsStore';
 
 // Export all types
 export type { CalendarEvent, RecurrenceType } from '@/services/calendarService';
@@ -29,4 +30,5 @@ export type { Expense, ExpenseCategory } from './expenseStore';
 export type { Chore, ChoreIconId, ChoreIntervalUnit } from './choreStore';
 export type { Habit } from './habitStore';
 export type { HomeModuleId } from '@/lib/home/layout';
+export type { SavingsAccount, SavingsKind } from '@/lib/savings/model';
 
