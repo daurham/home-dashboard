@@ -5,9 +5,10 @@ import {
   looksLikeSeedChores,
   readZustandState,
 } from '@/lib/store/browserBackup';
-import type { Chore, ChoreIconId, ChoreIntervalUnit } from '@/lib/store/choreStore';
+import { CHORE_ICON_IDS, type ChoreIconId } from '@/lib/chores/iconIds';
+import type { Chore, ChoreIntervalUnit } from '@/lib/store/choreStore';
 
-const ICONS: ChoreIconId[] = ['bins', 'vacuum', 'bath', 'plants', 'laundry', 'kitchen', 'pets', 'generic'];
+const ICONS: ChoreIconId[] = [...CHORE_ICON_IDS];
 
 function fromApi(row: DbChore): Chore {
   const unit: ChoreIntervalUnit =

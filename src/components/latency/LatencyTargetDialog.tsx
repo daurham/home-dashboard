@@ -168,7 +168,7 @@ export function LatencyTargetDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>{target ? 'Edit probe target' : 'Add probe target'}</DialogTitle>
           <DialogDescription>

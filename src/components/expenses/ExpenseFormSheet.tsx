@@ -268,15 +268,15 @@ export function ExpenseFormSheet({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[92vh]">
+        <DrawerContent className="max-h-[var(--vvh,100dvh)]">
           <DrawerHeader>
             <DrawerTitle>{expense ? 'Edit expense' : 'Add expense'}</DrawerTitle>
             <DrawerDescription>
               {expense ? 'Fix amount, category, date, or who paid.' : 'Amount and category are enough.'}
             </DrawerDescription>
           </DrawerHeader>
-          <div className="overflow-y-auto px-4 pb-4">{body}</div>
-          <DrawerFooter>{footer}</DrawerFooter>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 [-webkit-overflow-scrolling:touch]">{body}</div>
+          <DrawerFooter className="shrink-0">{footer}</DrawerFooter>
         </DrawerContent>
       </Drawer>
     );
@@ -284,15 +284,15 @@ export function ExpenseFormSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col sm:max-w-md">
+      <SheetContent className="flex w-full flex-col overflow-hidden sm:max-w-md">
         <SheetHeader>
           <SheetTitle>{expense ? 'Edit expense' : 'Add expense'}</SheetTitle>
           <SheetDescription>
             {expense ? 'Fix amount, category, date, or who paid.' : 'Amount and category are enough.'}
           </SheetDescription>
         </SheetHeader>
-        <div className="flex-1 overflow-y-auto py-4">{body}</div>
-        <SheetFooter>{footer}</SheetFooter>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-4 [-webkit-overflow-scrolling:touch]">{body}</div>
+        <SheetFooter className="shrink-0">{footer}</SheetFooter>
       </SheetContent>
     </Sheet>
   );

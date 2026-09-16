@@ -243,7 +243,7 @@ describe('chore queue', () => {
     createdAt: '2026-09-02T12:00:00.000Z',
   });
 
-  it('lists overdue and week-ahead chores by due date', () => {
+  it('lists overdue and due-today chores by due date', () => {
     const queue = choreQueue([dueToday, overdue], from);
     expect(queue.map(({ chore: item }) => item.id)).toEqual(['overdue', 'today']);
     expect(queue[0].status.tone).toBe('overdue');
@@ -251,16 +251,15 @@ describe('chore queue', () => {
   });
 
   it('hides chores completed today', () => {
-    // Next up is 09-22, inside the window, but it was already done today.
     expect(choreQueue([dueNextWeek], from)).toEqual([]);
   });
 
-  it('hides chores due past the one week horizon', () => {
-    // Next slot is Oct 1, twelve days out.
+  it('hides chores that are not due yet', () => {
     expect(choreQueue([dueAfterHorizon], from)).toEqual([]);
+    expect(choreQueue([dueNextWeek], from)).toEqual([]);
   });
 
-  it('does not bring a weekly chore back the moment it is completed', () => {
+  it('does not bring a weekly chore back until it is due again', () => {
     const weeklySaturday = chore({
       id: 'weekly',
       every: 1,
@@ -271,11 +270,10 @@ describe('chore queue', () => {
       lastCompletedOn: '2026-09-19',
       completedOccurrences: { '2026-09-19': '2026-09-19' },
     });
-    // Completed on Saturday, so the next occurrence is exactly seven days out.
     expect(formatDate(nextDueDate(weeklySaturday, from))).toBe('2026-09-26');
     expect(choreQueue([weeklySaturday], from)).toEqual([]);
-    // It reappears once that Saturday is inside the window.
-    expect(choreQueue([weeklySaturday], new Date('2026-09-20T12:00:00'))).toHaveLength(1);
+    expect(choreQueue([weeklySaturday], new Date('2026-09-20T12:00:00'))).toEqual([]);
+    expect(choreQueue([weeklySaturday], new Date('2026-09-26T12:00:00'))).toHaveLength(1);
   });
 });
 

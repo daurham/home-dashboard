@@ -8,6 +8,9 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    --vvh: 100dvh;
+    --vv-offset-top: 0px;
+    --vv-bottom: 0px;
     /* Base colors */
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
@@ -252,6 +255,14 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-size: calc(1rem * var(--font-scale));
+  }
+
+  input,
+  textarea,
+  select,
+  [role="textbox"] {
+    scroll-margin-bottom: 1.25rem;
+    scroll-margin-top: 1.25rem;
   }
 
   html.theme-auto,

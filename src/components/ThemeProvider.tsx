@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { usePreferencesStore, useThemeStore } from '@/lib/store';
 import { isAutoDark } from '@/lib/theme/schedule';
 import { useCurrentWeather } from '@/hooks/useCurrentWeather';
+import { useVisualViewportCss } from '@/hooks/useVisualViewportCss';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { themeMode, accentColor, darkStartsAt, darkEndsAt } = useThemeStore();
   const expenseTimeZone = usePreferencesStore((state) => state.expenseTimeZone);
   const { weather } = useCurrentWeather();
   const [now, setNow] = useState(() => new Date());
+  useVisualViewportCss();
 
   useEffect(() => {
     if (themeMode !== 'auto') return undefined;

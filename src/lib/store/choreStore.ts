@@ -2,9 +2,10 @@ import { create } from 'zustand';
 import { formatDate, parseDate, shiftDate } from '@/lib/calendar';
 import type { CalendarEvent } from '@/services/calendarService';
 import * as choreService from '@/services/choreService';
+import { CHORE_ICON_IDS, type ChoreIconId } from '@/lib/chores/iconIds';
 
 export type ChoreIntervalUnit = 'days' | 'weeks' | 'months';
-export type ChoreIconId = 'bins' | 'vacuum' | 'bath' | 'plants' | 'laundry' | 'kitchen' | 'pets' | 'generic';
+export type { ChoreIconId };
 
 export interface Chore {
   id: string;
@@ -61,7 +62,7 @@ interface ChoreState {
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-const ICONS: ChoreIconId[] = ['bins', 'vacuum', 'bath', 'plants', 'laundry', 'kitchen', 'pets', 'generic'];
+const ICONS: ChoreIconId[] = [...CHORE_ICON_IDS];
 
 const DAY_MS = 86_400_000;
 /** Completed occurrences older than this are dropped so storage stays bounded. */
@@ -347,31 +348,25 @@ export function getChoreStatus(chore: Chore, from = new Date()): ChoreStatus {
   return status;
 }
 
-/** Days covered by the "due soon" queue, counting today. */
-export const CHORE_QUEUE_DAYS = 7;
-
 export interface ChoreQueueItem {
   chore: Chore;
   status: ChoreStatus;
 }
 
 /**
- * Outstanding chores: anything overdue or due within the next week. Chores finished
- * today drop off, and so does the next cycle when it lands past the horizon — a weekly
- * chore completed on Saturday does not come back until the following week rolls in.
+ * Outstanding chores for the home tile: overdue or due today.
+ * Upcoming recurrences stay on the calendar until they come due.
  */
 export function choreQueue(
   chores: Chore[],
   from = new Date(),
-  withinDays = CHORE_QUEUE_DAYS,
 ): ChoreQueueItem[] {
   const today = formatDate(from);
-  const horizon = formatDate(shiftDate(from, withinDays - 1));
 
   return chores
     .filter((chore) => chore.lastCompletedOn !== today)
     .map((chore) => ({ chore, status: dueStatus(nextDueDate(chore, from), from) }))
-    .filter(({ status }) => status.dueOn <= horizon)
+    .filter(({ status }) => status.dueOn <= today)
     .sort((a, b) => a.status.dueOn.localeCompare(b.status.dueOn) || a.chore.title.localeCompare(b.chore.title));
 }
 

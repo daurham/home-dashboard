@@ -75,7 +75,7 @@ export function RecurringChoresCard({ compact = false }: { compact?: boolean }) 
           <FetchSkeleton lines={compact ? 3 : 4} lineClassName={compact ? 'h-8 rounded-lg' : 'h-12 rounded-xl'} />
         ) : visible.length === 0 ? (
           <div className="flex min-h-0 flex-1 items-center justify-center">
-            <p className="text-[11px] text-muted-foreground">All caught up this week.</p>
+            <p className="text-[11px] text-muted-foreground">Nothing due right now.</p>
           </div>
         ) : (
           <ul className="grid min-h-0 flex-1 auto-rows-fr grid-cols-2 content-start gap-1">
@@ -127,7 +127,7 @@ export function RecurringChoresCard({ compact = false }: { compact?: boolean }) 
         <FetchSkeleton lines={4} lineClassName="h-12 rounded-xl" />
       ) : visible.length === 0 ? (
         <div className="flex min-h-0 flex-1 items-center justify-center">
-          <p className="text-xs text-muted-foreground">All caught up — nothing due this week.</p>
+          <p className="text-xs text-muted-foreground">Nothing due right now.</p>
         </div>
       ) : (
         <ul className="flex min-h-0 flex-1 flex-col justify-start gap-1 overflow-y-auto">

@@ -53,7 +53,7 @@ export function CategoryManagerSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col sm:max-w-md">
+      <SheetContent className="flex w-full flex-col overflow-hidden sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Categories</SheetTitle>
           <SheetDescription>
@@ -61,7 +61,7 @@ export function CategoryManagerSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 space-y-6 overflow-y-auto py-4">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain py-4 [-webkit-overflow-scrolling:touch]">
           <div className="space-y-3">
             <Label htmlFor="new-category">Add category</Label>
             <Input
