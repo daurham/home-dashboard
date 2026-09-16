@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
         "/api": {
           target: apiProxyTarget,
           changeOrigin: true,
-          timeout: 180_000,
+          timeout: 600_000,
         },
         // Browser talks to this same-origin path; Vite adds camera credentials.
         "/camera-proxy": {

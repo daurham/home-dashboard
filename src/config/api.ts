@@ -43,7 +43,7 @@ export interface APIConfig {
 export const defaultAPIConfig: APIConfig = {
   weather: {
     enabled: true,
-    provider: 'mock', // Will be overridden by loadAPIConfig if API key is present
+    provider: 'weathergov',
     updateInterval: 10 * 60 * 1000, // 10 minutes
     units: 'metric',
   },
@@ -73,10 +73,6 @@ export async function loadAPIConfig(): Promise<APIConfig> {
   // Override with environment variables
   if (import.meta.env.VITE_WEATHER_API_KEY) {
     config.weather.apiKey = import.meta.env.VITE_WEATHER_API_KEY;
-    // Auto-set provider to openweathermap if API key is present and provider not explicitly set
-    if (!import.meta.env.VITE_WEATHER_PROVIDER) {
-      config.weather.provider = 'openweathermap';
-    }
   }
   if (import.meta.env.VITE_WEATHER_PROVIDER) {
     config.weather.provider = import.meta.env.VITE_WEATHER_PROVIDER as WeatherAPIConfig['provider'];

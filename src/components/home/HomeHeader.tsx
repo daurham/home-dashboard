@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { CalendarDays, Cloud, CloudLightning, CloudRain, CloudSnow, Lock, Moon, Sun } from 'lucide-react';
-import { useDashboardStore, usePreferencesStore } from '@/lib/store';
-import { WeatherService, WeatherData } from '@/services/weatherService';
+import { CalendarDays, Clock, Cloud, CloudLightning, CloudRain, CloudSnow, Lock, Moon, Sun } from 'lucide-react';
+import { usePreferencesStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { formatTimeFromDate } from '@/lib/utils/timeFormat';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCurrentWeather } from '@/hooks/useCurrentWeather';
 
 const weatherIcons = {
   sunny: Sun,
@@ -29,35 +30,14 @@ function formatHeaderDate(date: Date): string {
 }
 
 export function HomeHeader({ actions }: { actions?: ReactNode }) {
-  const { greetingName } = usePreferencesStore();
-  const { config } = useDashboardStore();
-  const { units } = usePreferencesStore();
+  const { greetingName, timeFormat } = usePreferencesStore();
+  const { weather, enabled: weatherEnabled, units } = useCurrentWeather();
   const [now, setNow] = useState(() => new Date());
-  const [weather, setWeather] = useState<WeatherData | null>(null);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    if (!config.weather.enabled || !config.weather.showCurrentWeather) return;
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const data = await WeatherService.getInstance().getCurrentWeather(units);
-        if (!cancelled) setWeather(data);
-      } catch (error) {
-        console.error('Failed to load weather:', error);
-      }
-    };
-    void load();
-    const interval = window.setInterval(load, 10 * 60 * 1000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
-  }, [config.weather.enabled, config.weather.showCurrentWeather, units]);
 
   const greeting = useMemo(() => greetingForHour(now.getHours()), [now]);
   const temperatureUnit = units === 'metric' ? '°C' : '°F';
@@ -81,7 +61,7 @@ export function HomeHeader({ actions }: { actions?: ReactNode }) {
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        {config.weather.enabled && (
+        {weatherEnabled && (
           <div className="flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-2.5 py-1">
             {weather ? (
               <>
@@ -99,6 +79,12 @@ export function HomeHeader({ actions }: { actions?: ReactNode }) {
             )}
           </div>
         )}
+        <div className="flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-2.5 py-1">
+          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+          <p className="text-sm font-semibold tabular-nums">
+            {formatTimeFromDate(now, timeFormat, true)}
+          </p>
+        </div>
         <div className="hidden items-center gap-1.5 rounded-full border border-border/70 bg-card px-2.5 py-1 sm:flex">
           <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
           <p className="text-xs font-medium">{formatHeaderDate(now)}</p>

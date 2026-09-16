@@ -1,4 +1,5 @@
 import { SidebarTab } from '@/lib/store';
+import { defaultWeatherLocationFromEnv } from '@/config/weatherLocation';
 
 /**
  * Dashboard configuration
@@ -30,9 +31,12 @@ export interface CalendarConfig {
 export interface WeatherConfig {
   enabled: boolean;
   apiKey: string;
-  provider: 'openweathermap' | 'weatherapi';
+  provider: 'openweathermap' | 'weathergov' | 'weatherapi';
   baseUrl: string;
   language: string;
+  city: string;
+  lat: number;
+  lon: number;
   showCurrentWeather: boolean;
   showForecast: boolean;
   showHourlyForecast: boolean;
@@ -70,6 +74,8 @@ export const defaultDashboardConfig: DashboardConfig = {
     'calendar',
     'habits',
     'cameras',
+    'files',
+    'logs',
     'latency',
     'plants',
     'devices',
@@ -99,9 +105,10 @@ export const defaultDashboardConfig: DashboardConfig = {
   weather: {
     enabled: true,
     apiKey: '',
-    provider: 'openweathermap',
+    provider: 'weathergov',
     baseUrl: '',
     language: 'en',
+    ...defaultWeatherLocationFromEnv(),
     showCurrentWeather: true,
     showForecast: true,
     showHourlyForecast: true,

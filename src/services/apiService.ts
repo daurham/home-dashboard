@@ -268,6 +268,62 @@ export const habitsApi = {
     apiRequest<{ message: string; id: string }>(`/habits/${id}`, { method: 'DELETE' }),
 };
 
+export interface SharedFile {
+  id: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: string;
+}
+
+export interface FileShareUsage {
+  files: SharedFile[];
+  usedBytes: number;
+  quotaBytes: number;
+  remainingBytes: number;
+}
+
+export const filesApi = {
+  list: () => apiRequest<FileShareUsage>('/files'),
+  upload: async (file: File) => {
+    const body = new FormData();
+    body.append('file', file);
+    const response = await fetch(`${API_BASE_URL}/files`, { method: 'POST', body });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        error: `API ${response.status} ${response.statusText || ''}`.trim(),
+      }));
+      throw Object.assign(new Error(error.error || error.details || `HTTP ${response.status}`), error);
+    }
+    return response.json() as Promise<{ file: SharedFile } & Omit<FileShareUsage, 'files'>>;
+  },
+  downloadUrl: (id: string) => `${API_BASE_URL}/files/${id}/download`,
+  delete: (id: string) =>
+    apiRequest<{ message: string; id: string } & Omit<FileShareUsage, 'files'>>(`/files/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
+export interface LogBook {
+  id: string;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  body: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export const logsApi = {
+  listBooks: () => apiRequest<LogBook[]>('/logs/books'),
+  createBook: (name: string) =>
+    apiRequest<LogBook>('/logs/books', { method: 'POST', body: JSON.stringify({ name }) }),
+  updateBook: (id: string, data: { name?: string; body?: string }) =>
+    apiRequest<LogBook>(`/logs/books/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteBook: (id: string) =>
+    apiRequest<{ message: string; id: string }>(`/logs/books/${id}`, { method: 'DELETE' }),
+};
+
 export const expenseSettingsApi = {
   get: () => apiRequest<DbExpenseSettings>('/expense-settings'),
   update: (data: { weekly_budget_cents?: number; weekly_budget?: number }) =>

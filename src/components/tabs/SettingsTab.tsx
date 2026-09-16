@@ -15,7 +15,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronRight, Calendar, Wallet } from 'lucide-react';
+import { ChevronDown, ChevronRight, Calendar, CloudSun, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { HOUSEHOLD_TIMEZONES } from '@/lib/expenses/constants';
@@ -30,7 +30,7 @@ const accentColors: Array<{ value: AccentColor; label: string }> = [
 
 export function SettingsTab() {
   const { themeMode, accentColor, setThemeMode, setAccentColor } = useThemeStore();
-  const { config, updateCalendarConfig } = useDashboardStore();
+  const { config, updateCalendarConfig, updateWeatherConfig } = useDashboardStore();
   const { timeFormat, units, expenseTimeZone, greetingName, householdLabel, householdMembers, setTimeFormat, setUnits, setExpenseTimeZone, setGreetingName, setHouseholdLabel, setHouseholdMembers } = usePreferencesStore();
   const [calendarOpen, setCalendarOpen] = useState(false);
   
@@ -159,6 +159,52 @@ export function SettingsTab() {
                 <p className="text-xs text-muted-foreground">
                   Applies to weather and other measurements
                 </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t pt-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <CloudSun className="h-5 w-5" />
+              <h3 className="text-lg font-semibold text-foreground">Weather</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Forecasts use these household coordinates. Free APIs cover Overgaard by lat/lon even when they label a nearby town.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="weather-city">City label</Label>
+              <Input
+                id="weather-city"
+                value={config.weather.city ?? ''}
+                onChange={(e) => updateWeatherConfig({ city: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="weather-lat">Latitude</Label>
+                <Input
+                  id="weather-lat"
+                  type="number"
+                  step="0.0001"
+                  value={config.weather.lat}
+                  onChange={(e) => {
+                    const lat = Number.parseFloat(e.target.value);
+                    if (Number.isFinite(lat)) updateWeatherConfig({ lat });
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="weather-lon">Longitude</Label>
+                <Input
+                  id="weather-lon"
+                  type="number"
+                  step="0.0001"
+                  value={config.weather.lon}
+                  onChange={(e) => {
+                    const lon = Number.parseFloat(e.target.value);
+                    if (Number.isFinite(lon)) updateWeatherConfig({ lon });
+                  }}
+                />
               </div>
             </div>
           </div>

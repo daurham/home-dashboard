@@ -1,4 +1,8 @@
 import { loadAPIConfig } from '@/config/api';
+import {
+  resolveWeatherLocation,
+  type WeatherLocation,
+} from '@/config/weatherLocation';
 
 export interface WeatherData {
   temperature: number;
@@ -22,29 +26,31 @@ interface OpenWeatherMapResponse {
   wind: {
     speed: number;
   };
-  coord?: {
-    lat: number;
-    lon: number;
-  };
-  name?: string; // City name
   sys?: {
-    country?: string;
-    sunrise?: number; // Unix timestamp
-    sunset?: number; // Unix timestamp
+    sunrise?: number;
+    sunset?: number;
   };
-  dt?: number; // Current time, Unix timestamp
+  dt?: number;
+}
+
+interface NwsPeriod {
+  temperature: number;
+  temperatureUnit: string;
+  windSpeed?: string;
+  shortForecast?: string;
+  isDaytime?: boolean;
+  relativeHumidity?: { value?: number | null };
 }
 
 /**
- * Weather service that fetches data from OpenWeatherMap API.
- * Falls back to mock data if API is not configured.
+ * Weather for a household-fixed lat/lon.
+ * NOAA covers Overgaard; OpenWeatherMap does too, but names the nearest city in its database.
  */
 export class WeatherService {
   private static instance: WeatherService;
-  private cachedLocation: { lat: number; lon: number } | null = null;
-  
+
   private constructor() {}
-  
+
   static getInstance(): WeatherService {
     if (!WeatherService.instance) {
       WeatherService.instance = new WeatherService();
@@ -52,264 +58,203 @@ export class WeatherService {
     return WeatherService.instance;
   }
 
-  /**
-   * Get user's location using browser geolocation API
-   * Falls back to IP-based geolocation if browser geolocation fails
-   */
-  private async getLocation(): Promise<{ lat: number; lon: number }> {
-    if (this.cachedLocation) {
-      return this.cachedLocation;
-    }
-
-    // Try browser geolocation first
-    try {
-      const location = await this.getBrowserLocation();
-      this.cachedLocation = location;
-      return location;
-    } catch (browserError) {
-      console.warn('Browser geolocation failed, trying IP-based geolocation:', browserError);
-      
-      // Fallback to IP-based geolocation
-      try {
-        const location = await this.getLocationFromIP();
-        this.cachedLocation = location;
-        return location;
-      } catch (ipError) {
-        console.error('IP-based geolocation also failed:', ipError);
-        throw new Error(`Failed to get location: ${browserError instanceof Error ? browserError.message : String(browserError)}`);
-      }
-    }
-  }
-
-  /**
-   * Get location using browser geolocation API
-   */
-  private async getBrowserLocation(): Promise<{ lat: number; lon: number }> {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocation is not supported by your browser'));
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const location = {
-            lat: position.coords.latitude,
-            lon: position.coords.longitude,
-          };
-          resolve(location);
-        },
-        (error) => {
-          // Provide more detailed error messages
-          let errorMessage = `Geolocation error: ${error.message}`;
-          if (error.code === error.PERMISSION_DENIED) {
-            errorMessage += ' (Permission denied - check browser settings or use HTTPS)';
-          } else if (error.code === error.POSITION_UNAVAILABLE) {
-            errorMessage += ' (Position unavailable)';
-          } else if (error.code === error.TIMEOUT) {
-            errorMessage += ' (Request timeout)';
-          }
-          reject(new Error(errorMessage));
-        },
-        {
-          timeout: 10000,
-          maximumAge: 600000, // Cache for 10 minutes
-        }
-      );
-    });
-  }
-
-  /**
-   * Get location using IP-based geolocation as fallback
-   */
-  private async getLocationFromIP(): Promise<{ lat: number; lon: number }> {
-    try {
-      // Use a free IP geolocation service
-      const response = await fetch('https://ipapi.co/json/', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`IP geolocation API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      console.log('IP geolocation data:', data);
-      
-      if (data.latitude && data.longitude) {
-        return {
-          lat: parseFloat(data.latitude),
-          lon: parseFloat(data.longitude),
-        };
-      } else {
-        throw new Error('Invalid response from IP geolocation service');
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`IP geolocation failed: ${errorMessage}`);
-    }
-  }
-
-  /**
-   * Map OpenWeatherMap weather condition codes to our condition types
-   */
   private mapWeatherCondition(weatherId: number): WeatherData['condition'] {
-    // OpenWeatherMap weather condition codes
-    // https://openweathermap.org/weather-conditions
-    
     if (weatherId >= 200 && weatherId < 300) {
-      return 'stormy'; // Thunderstorm
-    } else if (weatherId >= 300 && weatherId < 600) {
-      return 'rainy'; // Drizzle and Rain
-    } else if (weatherId >= 600 && weatherId < 700) {
-      return 'snowy'; // Snow
-    } else if (weatherId >= 700 && weatherId < 800) {
-      return 'cloudy'; // Atmosphere (fog, mist, etc.)
-    } else if (weatherId === 800) {
-      return 'sunny'; // Clear sky
-    } else if (weatherId >= 801 && weatherId < 805) {
-      return 'cloudy'; // Clouds
-    } else {
-      return 'cloudy'; // Default fallback
+      return 'stormy';
     }
+    if (weatherId >= 300 && weatherId < 600) {
+      return 'rainy';
+    }
+    if (weatherId >= 600 && weatherId < 700) {
+      return 'snowy';
+    }
+    if (weatherId >= 700 && weatherId < 800) {
+      return 'cloudy';
+    }
+    if (weatherId === 800) {
+      return 'sunny';
+    }
+    if (weatherId >= 801 && weatherId < 805) {
+      return 'cloudy';
+    }
+    return 'cloudy';
   }
 
-  /**
-   * Fetch weather data from OpenWeatherMap API
-   */
-  /**
-   * Fetch weather data from OpenWeatherMap API
-   */
+  private mapForecastText(text: string): WeatherData['condition'] {
+    const t = text.toLowerCase();
+    if (/\b(thunder|t-storm|storm)\b/.test(t)) return 'stormy';
+    if (/\bsnow\b/.test(t)) return 'snowy';
+    if (/\b(rain|shower|drizzle)\b/.test(t)) return 'rainy';
+    if (/\b(sunny|clear|fair)\b/.test(t)) return 'sunny';
+    return 'cloudy';
+  }
+
+  private parseWindMph(windSpeed: string): number {
+    const nums = [...windSpeed.matchAll(/(\d+(?:\.\d+)?)/g)].map((match) => Number(match[1]));
+    if (nums.length === 0) return 0;
+    return Math.round(nums.reduce((sum, value) => sum + value, 0) / nums.length);
+  }
+
+  private convertTemp(value: number, from: 'F' | 'C', units: 'metric' | 'imperial'): number {
+    if (units === 'imperial') {
+      return from === 'F' ? Math.round(value) : Math.round((value * 9) / 5 + 32);
+    }
+    return from === 'C' ? Math.round(value) : Math.round(((value - 32) * 5) / 9);
+  }
+
+  private mockWeather(city: string, units: 'metric' | 'imperial'): WeatherData {
+    const conditions: WeatherData['condition'][] = ['sunny', 'cloudy', 'rainy', 'stormy', 'snowy'];
+    const currentHour = new Date().getHours();
+    return {
+      temperature: units === 'imperial' ? Math.floor(Math.random() * 40) + 40 : Math.floor(Math.random() * 30) + 10,
+      condition: conditions[Math.floor(Math.random() * conditions.length)],
+      humidity: Math.floor(Math.random() * 40) + 40,
+      windSpeed: Math.floor(Math.random() * 20) + 5,
+      city,
+      isDaytime: currentHour >= 6 && currentHour < 20,
+    };
+  }
+
+  private async fetchFromWeatherGov(
+    lat: number,
+    lon: number,
+    units: 'metric' | 'imperial',
+    city: string
+  ): Promise<WeatherData> {
+    const pointsUrl = `https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`;
+    const pointsResponse = await fetch(pointsUrl, {
+      headers: { Accept: 'application/geo+json' },
+    });
+
+    if (!pointsResponse.ok) {
+      throw new Error(`weather.gov points error: ${pointsResponse.status} ${pointsResponse.statusText}`);
+    }
+
+    const points = await pointsResponse.json();
+    const hourlyUrl = points.properties?.forecastHourly as string | undefined;
+    if (!hourlyUrl) {
+      throw new Error('weather.gov did not return a forecast for this location');
+    }
+
+    const forecastResponse = await fetch(hourlyUrl, {
+      headers: { Accept: 'application/geo+json' },
+    });
+
+    if (!forecastResponse.ok) {
+      throw new Error(`weather.gov forecast error: ${forecastResponse.status} ${forecastResponse.statusText}`);
+    }
+
+    const forecast = await forecastResponse.json();
+    const period = forecast.properties?.periods?.[0] as NwsPeriod | undefined;
+    if (!period || typeof period.temperature !== 'number') {
+      throw new Error('weather.gov forecast was empty');
+    }
+
+    const fromUnit = period.temperatureUnit === 'C' ? 'C' : 'F';
+    const windMph = this.parseWindMph(String(period.windSpeed ?? ''));
+    const humidity = period.relativeHumidity?.value;
+
+    return {
+      temperature: this.convertTemp(period.temperature, fromUnit, units),
+      condition: this.mapForecastText(String(period.shortForecast ?? '')),
+      humidity: typeof humidity === 'number' ? Math.round(humidity) : 0,
+      windSpeed: units === 'metric' ? Math.round(windMph * 1.60934) : windMph,
+      city,
+      isDaytime: Boolean(period.isDaytime),
+    };
+  }
+
   private async fetchFromOpenWeatherMap(
     apiKey: string,
     lat: number,
     lon: number,
-    units: 'metric' | 'imperial'
+    units: 'metric' | 'imperial',
+    city: string
   ): Promise<WeatherData> {
-    // Validate API key format (OpenWeatherMap keys are typically 32 characters)
     if (!apiKey || apiKey.trim().length === 0) {
       throw new Error('OpenWeatherMap API key is missing or empty');
     }
 
-    const baseUrl = 'https://api.openweathermap.org/data/2.5';
-    const url = `${baseUrl}/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=${units}`;
-
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=${units}`;
     const response = await fetch(url);
 
     if (!response.ok) {
       let errorMessage = `OpenWeatherMap API error: ${response.status} ${response.statusText}`;
-      
+
       try {
         const errorData = await response.json();
         if (errorData.message) {
           errorMessage += `. ${errorData.message}`;
         }
-        
-        // Provide helpful error messages for common issues
-        if (response.status === 401) {
-          errorMessage += '\n\nPossible causes:\n' +
-            '- API key is invalid or expired\n' +
-            '- API key has not been activated (check your email for activation link)\n' +
-            '- API key does not have permission to access Current Weather Data API\n' +
-            'Please verify your API key at https://home.openweathermap.org/api_keys';
-        } else if (response.status === 429) {
-          errorMessage += '\n\nRate limit exceeded. Please wait before making more requests.';
-        }
       } catch {
-        // If we can't parse the error response, use the status text
+        // Use status text when the error body is not JSON.
       }
-      
+
       throw new Error(errorMessage);
     }
 
     const data: OpenWeatherMapResponse = await response.json();
 
-    // Determine if it's daytime based on sunrise/sunset
     let isDaytime: boolean | undefined;
     if (data.sys?.sunrise && data.sys?.sunset && data.dt) {
-      const currentTime = data.dt;
-      const sunrise = data.sys.sunrise;
-      const sunset = data.sys.sunset;
-      isDaytime = currentTime >= sunrise && currentTime < sunset;
+      isDaytime = data.dt >= data.sys.sunrise && data.dt < data.sys.sunset;
     } else {
-      // Fallback: use local time to estimate day/night
       const currentHour = new Date().getHours();
-      isDaytime = currentHour >= 6 && currentHour < 20; // Rough estimate: day is 6 AM to 8 PM
+      isDaytime = currentHour >= 6 && currentHour < 20;
     }
 
     return {
       temperature: Math.round(data.main.temp),
       condition: this.mapWeatherCondition(data.weather[0]?.id || 800),
       humidity: data.main.humidity,
-      windSpeed: Math.round(data.wind.speed * (units === 'metric' ? 3.6 : 1)), // Convert m/s to km/h or keep mph
-      city: data.name || undefined,
+      windSpeed: Math.round(data.wind.speed * (units === 'metric' ? 3.6 : 1)),
+      city,
       isDaytime,
     };
   }
 
-  /**
-   * Get current weather data
-   */
-  async getCurrentWeather(units: 'metric' | 'imperial' = 'metric'): Promise<WeatherData> {
+  async getCurrentWeather(
+    units: 'metric' | 'imperial' = 'metric',
+    location?: Partial<WeatherLocation>
+  ): Promise<WeatherData> {
+    const resolved = resolveWeatherLocation(location);
+
     try {
       const config = await loadAPIConfig();
-      // Check if OpenWeatherMap is configured
-      if (
-        config.weather.provider === 'openweathermap' &&
-        config.weather.apiKey &&
-        config.weather.enabled
-      ) {
-        // Validate API key before attempting to use it
-        if (!config.weather.apiKey.trim()) {
-          console.warn('OpenWeatherMap API key is empty, falling back to mock data');
-        } else {
-          try {
-            const location = await this.getLocation();
-            try {
-              return await this.fetchFromOpenWeatherMap(
-                config.weather.apiKey,
-                location.lat,
-                location.lon,
-                units
-              );
-            } catch (apiError) {
-              const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
-              console.error('Failed to fetch from OpenWeatherMap API:', errorMessage);
-              console.error('API error details:', apiError);
-              // Don't fall through silently - show the error but still provide mock data
-              // Fall through to mock data
-            }
-          } catch (locationError) {
-            const errorMessage = locationError instanceof Error ? locationError.message : String(locationError);
-            console.error('Failed to get location, falling back to mock data:', errorMessage);
-            console.error('Location error details:', locationError);
-            // Fall through to mock data
-          }
-        }
-      } else {
+
+      if (!config.weather.enabled || config.weather.provider === 'mock') {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        return this.mockWeather(resolved.city, units);
       }
 
-      // Fallback to mock data if API is not configured or location fails
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const conditions: WeatherData['condition'][] = ['sunny', 'cloudy', 'rainy', 'stormy', 'snowy'];
-      const randomCondition = conditions[Math.floor(Math.random() * conditions.length)];
-      
-      // Estimate day/night for mock data
-      const currentHour = new Date().getHours();
-      const isDaytime = currentHour >= 6 && currentHour < 20;
-      
-      return {
-        temperature: Math.floor(Math.random() * 30) + 10, // 10-40°C
-        condition: randomCondition,
-        humidity: Math.floor(Math.random() * 40) + 40, // 40-80%
-        windSpeed: Math.floor(Math.random() * 20) + 5, // 5-25 km/h
-        isDaytime,
-      };
+      const sources: Array<() => Promise<WeatherData>> = [
+        () => this.fetchFromWeatherGov(resolved.lat, resolved.lon, units, resolved.city),
+      ];
+
+      if (config.weather.apiKey?.trim()) {
+        sources.push(() =>
+          this.fetchFromOpenWeatherMap(
+            config.weather.apiKey as string,
+            resolved.lat,
+            resolved.lon,
+            units,
+            resolved.city
+          )
+        );
+      }
+
+      let lastError: unknown;
+      for (const fetchWeather of sources) {
+        try {
+          return await fetchWeather();
+        } catch (error) {
+          lastError = error;
+          console.warn('Weather source failed, trying next:', error);
+        }
+      }
+
+      console.error('All weather sources failed, falling back to mock data:', lastError);
+      return this.mockWeather(resolved.city, units);
     } catch (error) {
       console.error('Error fetching weather data:', error);
       throw error;

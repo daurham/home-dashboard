@@ -2,18 +2,20 @@ import { Check } from 'lucide-react';
 import { HubCard } from '@/components/home/HubCard';
 import { getHabitWeekDays, habitProgress, useHabitStore } from '@/lib/store/habitStore';
 import { formatDate, isToday } from '@/lib/calendar';
-import { useUIStore } from '@/lib/store';
+import { useDashboardStore, useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { HabitFetchSkeleton } from '@/components/ui/fetch-skeleton';
-
-const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export function HabitTrackerCard({ compact = false }: { compact?: boolean }) {
   const habits = useHabitStore((s) => s.habits);
   const hasLoaded = useHabitStore((s) => s.hasLoaded);
   const toggleDay = useHabitStore((s) => s.toggleDay);
   const setActiveSidebarTab = useUIStore((s) => s.setActiveSidebarTab);
-  const weekDays = getHabitWeekDays(new Date(), 0);
+  const firstDayOfWeek = useDashboardStore((s) => s.config.calendar.firstDayOfWeek);
+  const weekDays = getHabitWeekDays(new Date(), firstDayOfWeek);
+  const dayLetters = firstDayOfWeek === 0
+    ? ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+    : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   const visible = habits.slice(0, compact ? 5 : 8);
   const circle = compact ? 'h-5 w-5' : 'h-7 w-7';
   const check = compact ? 'h-3 w-3' : 'h-3.5 w-3.5';
@@ -53,7 +55,7 @@ export function HabitTrackerCard({ compact = false }: { compact?: boolean }) {
               isToday(day) && 'text-foreground',
             )}
           >
-            {DAY_LETTERS[index]}
+            {dayLetters[index]}
           </div>
         ))}
         <div className={cn('flex items-end justify-end pb-1 font-medium text-muted-foreground', compact ? 'text-[8px]' : 'text-[10px]')}>

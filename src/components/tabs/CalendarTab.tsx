@@ -1,13 +1,11 @@
 import { Clock } from '@/components/dashboard/Clock/Clock';
 import { WeatherWidget } from '@/components/dashboard/Weather/WeatherWidget';
 import { CalendarView } from '@/components/dashboard/Calendar/CalendarView';
-import { useDashboardStore } from '@/lib/store';
+import { useDashboardStore, usePreferencesStore } from '@/lib/store';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Card } from '@/components/ui/card';
-import { useEffect, useState } from 'react';
+import { useCurrentWeather } from '@/hooks/useCurrentWeather';
 import { Cloud, CloudRain, CloudSnow, Sun, CloudLightning, Moon } from 'lucide-react';
-import { WeatherService, WeatherData } from '@/services/weatherService';
-import { usePreferencesStore } from '@/lib/store';
+import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const weatherIcons = {
@@ -24,21 +22,22 @@ function MobileClock() {
   const { timeFormat } = usePreferencesStore();
   const clockConfig = config.clock;
   const [time, setTime] = useState(new Date());
-  
-  if (!clockConfig.enabled || !clockConfig.showTime) {
-    return null;
-  }
-  
-  const updateInterval = clockConfig.showMilliseconds ? 10 : 
-                        clockConfig.showSeconds ? 1000 : 
+
+  const updateInterval = clockConfig.showMilliseconds ? 10 :
+                        clockConfig.showSeconds ? 1000 :
                         60000;
-  
+
   useEffect(() => {
+    if (!clockConfig.enabled || !clockConfig.showTime) return;
     const timer = setInterval(() => {
       setTime(new Date());
     }, updateInterval);
     return () => clearInterval(timer);
-  }, [updateInterval]);
+  }, [clockConfig.enabled, clockConfig.showTime, updateInterval]);
+
+  if (!clockConfig.enabled || !clockConfig.showTime) {
+    return null;
+  }
   
   let hours = time.getHours();
   const minutes = time.getMinutes().toString().padStart(2, '0');
@@ -66,34 +65,12 @@ function MobileClock() {
 
 // Compact mobile weather component
 function MobileWeather() {
-  const { config } = useDashboardStore();
-  const { units } = usePreferencesStore();
-  const weatherConfig = config.weather;
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(true);
-  
-  if (!weatherConfig.enabled || !weatherConfig.showCurrentWeather) {
+  const { weather, loading, enabled, units } = useCurrentWeather();
+
+  if (!enabled) {
     return null;
   }
-  
-  useEffect(() => {
-    const loadWeather = async () => {
-      try {
-        const service = WeatherService.getInstance();
-        const data = await service.getCurrentWeather(units);
-        setWeather(data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Failed to load weather:', error);
-        setLoading(false);
-      }
-    };
-    
-    loadWeather();
-    const interval = setInterval(loadWeather, 10 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [weatherConfig.showCurrentWeather, units]);
-  
+
   if (loading || !weather) {
     return (
       <div className="flex items-center gap-2" role="status" aria-label="Loading weather">
@@ -102,13 +79,12 @@ function MobileWeather() {
       </div>
     );
   }
-  
-  // Use Moon icon for clear skies at night, otherwise use the condition icon
-  const WeatherIcon = weather.condition === 'sunny' && weather.isDaytime === false 
-    ? Moon 
+
+  const WeatherIcon = weather.condition === 'sunny' && weather.isDaytime === false
+    ? Moon
     : weatherIcons[weather.condition];
   const temperatureUnit = units === 'metric' ? '°C' : '°F';
-  
+
   return (
     <div className="flex items-center gap-2">
       <WeatherIcon className="h-5 w-5 text-weather-icon" />

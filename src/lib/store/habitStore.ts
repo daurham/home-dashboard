@@ -20,7 +20,7 @@ interface HabitState {
   toggleDay: (id: string, date: Date) => Promise<void>;
 }
 
-export function getHabitWeekDays(from = new Date(), firstDayOfWeek: 0 | 1 = 0): Date[] {
+export function getHabitWeekDays(from = new Date(), firstDayOfWeek: 0 | 1 = 1): Date[] {
   return getWeekDates(getWeekStart(from, firstDayOfWeek));
 }
 

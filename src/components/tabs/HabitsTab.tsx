@@ -13,10 +13,9 @@ import {
 import { HubCard } from '@/components/home/HubCard';
 import { getHabitWeekDays, habitProgress, useHabitStore } from '@/lib/store/habitStore';
 import { formatDate, isToday } from '@/lib/calendar';
+import { useDashboardStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { HabitFetchSkeleton } from '@/components/ui/fetch-skeleton';
-
-const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export function HabitsTab() {
   const habits = useHabitStore((s) => s.habits);
@@ -25,7 +24,11 @@ export function HabitsTab() {
   const updateHabit = useHabitStore((s) => s.updateHabit);
   const removeHabit = useHabitStore((s) => s.removeHabit);
   const toggleDay = useHabitStore((s) => s.toggleDay);
-  const weekDays = getHabitWeekDays(new Date(), 0);
+  const firstDayOfWeek = useDashboardStore((s) => s.config.calendar.firstDayOfWeek);
+  const weekDays = getHabitWeekDays(new Date(), firstDayOfWeek);
+  const dayLetters = firstDayOfWeek === 0
+    ? ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+    : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
@@ -73,7 +76,7 @@ export function HabitsTab() {
               <th className="pb-2 text-left font-medium">Habit</th>
               {weekDays.map((day, index) => (
                 <th key={formatDate(day)} className={cn('pb-2 text-center font-medium', isToday(day) && 'text-foreground')}>
-                  <div>{DAY_LETTERS[index]}</div>
+                  <div>{dayLetters[index]}</div>
                   <div className="font-normal">{day.getDate()}</div>
                 </th>
               ))}

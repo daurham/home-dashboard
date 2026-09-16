@@ -13,6 +13,8 @@ export { useListStore } from './listStore';
 export { useExpenseStore } from './expenseStore';
 export { useChoreStore } from './choreStore';
 export { useHabitStore } from './habitStore';
+export { useFileShareStore } from './fileShareStore';
+export { useLogStore } from './logStore';
 export { useHomeLayoutStore } from './homeLayoutStore';
 
 // Export all types

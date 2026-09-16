@@ -3,7 +3,7 @@ import { Sidebar } from './Sidebar';
 import { RightSidebar } from './RightSidebar';
 import { EventModal } from './Modals/EventModal';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useChoreStore, useHabitStore, useUIStore } from '@/lib/store';
+import { useChoreStore, useFileShareStore, useHabitStore, useUIStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,20 +13,22 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-const HUB_TABS = new Set(['home', 'expenses', 'chores', 'habits', 'latency', 'ai']);
+const HUB_TABS = new Set(['home', 'expenses', 'chores', 'habits', 'latency', 'ai', 'files', 'logs']);
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isMobile = useIsMobile();
   const { sidebarCollapsed, setSidebarCollapsed, rightSidebarCollapsed, setRightSidebarCollapsed, activeSidebarTab } = useUIStore();
   const loadChores = useChoreStore((s) => s.load);
   const loadHabits = useHabitStore((s) => s.load);
+  const loadFiles = useFileShareStore((s) => s.load);
   const hideRightSidebar = HUB_TABS.has(activeSidebarTab);
   const isHome = activeSidebarTab === 'home';
 
   useEffect(() => {
     void loadChores();
     void loadHabits();
-  }, [loadChores, loadHabits]);
+    void loadFiles();
+  }, [loadChores, loadHabits, loadFiles]);
 
   return (
     <div className={cn(
